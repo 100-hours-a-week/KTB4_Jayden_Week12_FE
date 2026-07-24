@@ -93,6 +93,36 @@ describe('CommentSection', () => {
     expect(await screen.findByText('첫 댓글을 남겨주세요.')).toBeInTheDocument();
   });
 
+  it('빈 목록에 댓글을 작성하면 생성 응답만 목록에 추가한다', async () => {
+    const user = userEvent.setup();
+    getCommentsMock.mockResolvedValue([]);
+    createCommentMock.mockResolvedValue(comment(1, { userId: 1, commentText: '첫 댓글' }));
+    render(<CommentSection articleId={12} />);
+
+    await screen.findByText('첫 댓글을 남겨주세요.');
+    const input = screen.getByPlaceholderText('댓글을 남겨주세요!');
+    await user.type(input, '첫 댓글');
+    await user.click(screen.getByRole('button', { name: '댓글 등록' }));
+
+    expect(await screen.findByText('첫 댓글')).toBeInTheDocument();
+    expect(screen.queryByText('첫 댓글을 남겨주세요.')).not.toBeInTheDocument();
+    expect(getCommentsMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('최초 댓글 조회가 끝날 때까지 댓글 등록을 비활성화한다', async () => {
+    let resolveInitialRequest;
+    getCommentsMock.mockReturnValue(new Promise((resolve) => { resolveInitialRequest = resolve; }));
+    render(<CommentSection articleId={12} />);
+
+    const input = screen.getByPlaceholderText('댓글을 남겨주세요!');
+    expect(input).toBeDisabled();
+    expect(screen.getByRole('button', { name: '댓글 등록' })).toBeDisabled();
+
+    await act(async () => resolveInitialRequest([]));
+    await screen.findByText('첫 댓글을 남겨주세요.');
+    expect(input).toBeEnabled();
+  });
+
   it('첫 조회 오류에서 같은 댓글 조회를 다시 시도한다', async () => {
     const user = userEvent.setup();
     getCommentsMock
@@ -150,14 +180,7 @@ describe('CommentSection', () => {
   it('댓글과 답글을 생성하고 입력을 초기화하며 댓글 수를 갱신한다', async () => {
     const user = userEvent.setup();
     const onCommentCountChange = vi.fn();
-    getCommentsMock
-      .mockResolvedValueOnce([comment(1)])
-      .mockResolvedValueOnce([comment(1), comment(2, { userId: 1, nickname: '현재 닉네임', commentText: '새 댓글' })])
-      .mockResolvedValueOnce([
-        comment(1),
-        comment(2, { userId: 1, nickname: '현재 닉네임', commentText: '새 댓글' }),
-        comment(3, { userId: 1, parentCommentId: 1, commentText: '새 답글' }),
-      ]);
+    getCommentsMock.mockResolvedValueOnce([comment(1)]);
     createCommentMock
       .mockResolvedValueOnce(comment(2, { nickname: '현재 닉네임', commentText: '새 댓글' }))
       .mockResolvedValueOnce(comment(3, { parentCommentId: 1, commentText: '새 답글' }));
@@ -180,18 +203,18 @@ describe('CommentSection', () => {
       [12, { commentText: '새 댓글', parentCommentId: null }],
       [12, { commentText: '새 답글', parentCommentId: 1 }],
     ]);
+    expect(getCommentsMock).toHaveBeenCalledTimes(1);
     expect(onCommentCountChange).toHaveBeenCalledTimes(2);
     expect(onCommentCountChange).toHaveBeenNthCalledWith(1, 1);
   });
 
-  it('추가 조회 중 댓글을 작성하면 기존 GET을 중단하고 첫 페이지를 새로 조회한다', async () => {
+  it('추가 조회 중 댓글을 작성하면 GET 결과와 생성 댓글을 모두 유지한다', async () => {
     const user = userEvent.setup();
     const firstPage = Array.from({ length: 10 }, (_, index) => comment(index + 1));
     let resolveLoadMore;
     getCommentsMock
       .mockResolvedValueOnce(firstPage)
-      .mockReturnValueOnce(new Promise((resolve) => { resolveLoadMore = resolve; }))
-      .mockResolvedValueOnce([comment(20, { commentText: '방금 작성한 댓글' })]);
+      .mockReturnValueOnce(new Promise((resolve) => { resolveLoadMore = resolve; }));
     createCommentMock.mockResolvedValue(comment(20, { commentText: '방금 작성한 댓글' }));
     render(<CommentSection articleId={12} />);
 
@@ -205,10 +228,29 @@ describe('CommentSection', () => {
     await user.click(screen.getByRole('button', { name: '댓글 등록' }));
 
     expect(await screen.findByText('방금 작성한 댓글')).toBeInTheDocument();
-    expect(getCommentsMock).toHaveBeenCalledTimes(3);
-    expect(getCommentsMock.mock.calls[2][1]).toMatchObject({ lastCommentId: null, lastParentCommentId: null });
-    expect(getCommentsMock.mock.calls[1][1].signal.aborted).toBe(true);
-    resolveLoadMore([comment(11)]);
+    expect(getCommentsMock).toHaveBeenCalledTimes(2);
+    expect(getCommentsMock.mock.calls[1][1].signal.aborted).toBe(false);
+
+    await act(async () => resolveLoadMore([comment(11)]));
+    expect(await screen.findByText('댓글 11')).toBeInTheDocument();
+    expect(screen.getByText('방금 작성한 댓글')).toBeInTheDocument();
+  });
+
+  it('생성 응답 ID가 기존 댓글과 같으면 중복 표시하지 않는다', async () => {
+    const user = userEvent.setup();
+    getCommentsMock.mockResolvedValue([comment(1)]);
+    createCommentMock.mockResolvedValue(comment(1, { commentText: '중복 응답' }));
+    render(<CommentSection articleId={12} />);
+
+    await screen.findByText('댓글 1');
+    const input = screen.getByPlaceholderText('댓글을 남겨주세요!');
+    await user.type(input, '중복 응답');
+    await user.click(screen.getByRole('button', { name: '댓글 등록' }));
+
+    await waitFor(() => expect(input).toHaveValue(''));
+    expect(screen.getAllByRole('listitem')).toHaveLength(1);
+    expect(screen.queryByText('중복 응답')).not.toBeInTheDocument();
+    expect(getCommentsMock).toHaveBeenCalledTimes(1);
   });
 
   it('본인 댓글을 수정·삭제하고 삭제 실패 시 dialog를 유지한다', async () => {

@@ -1,5 +1,10 @@
 import { request } from '../../shared/api/httpClient.js';
-import { requireArray } from '../../shared/api/contracts.js';
+import {
+  ApiContractError,
+  requireArray,
+  requireId,
+  requireRecord,
+} from '../../shared/api/contracts.js';
 
 export const COMMENT_PAGE_SIZE = 10;
 
@@ -83,8 +88,17 @@ export async function createComment(articleId, { commentText, parentCommentId = 
     method: 'POST',
     body: { commentText, parentCommentId },
   });
-  const comment = response?.data;
-  return comment?.commentId === undefined || comment?.commentId === null ? null : mapComment(comment);
+  const comment = requireRecord(response?.data, '댓글 생성');
+  requireId(comment, 'commentId', '댓글 생성');
+  requireId(comment, 'userId', '댓글 생성');
+
+  for (const fieldName of ['parentCommentId', 'commentText', 'nickname', 'createdAt']) {
+    if (!Object.hasOwn(comment, fieldName)) {
+      throw new ApiContractError(`댓글 생성 응답에 ${fieldName}가 없습니다.`);
+    }
+  }
+
+  return mapComment(comment);
 }
 
 export async function updateComment(articleId, commentId, commentText) {

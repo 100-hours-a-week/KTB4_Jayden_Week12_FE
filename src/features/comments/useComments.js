@@ -28,30 +28,31 @@ export function useComments(articleId) {
     getItemId: getCommentId,
     pageSize: COMMENT_PAGE_SIZE,
   });
+  const { appendItem, reset, setItems } = pagination;
 
   const addComment = useCallback(async (commentText, parentCommentId = null) => {
     const createdComment = await createComment(articleId, { commentText, parentCommentId });
-    await pagination.reset({ throwOnError: true });
+    appendItem(createdComment);
     return createdComment;
-  }, [articleId, pagination]);
+  }, [appendItem, articleId]);
   const editComment = useCallback(async (commentId, commentText) => {
     await updateComment(articleId, commentId, commentText);
-    pagination.setItems((currentItems) => currentItems.map((comment) => (
+    setItems((currentItems) => currentItems.map((comment) => (
       String(comment.commentId) === String(commentId) ? { ...comment, commentText } : comment
     )));
-  }, [articleId, pagination]);
+  }, [articleId, setItems]);
   const removeComment = useCallback(async (commentId) => {
     await deleteComment(articleId, commentId);
-    pagination.setItems((currentItems) => currentItems.map((comment) => (
+    setItems((currentItems) => currentItems.map((comment) => (
       String(comment.commentId) === String(commentId) ? { ...comment, isDeleted: true } : comment
     )));
-  }, [articleId, pagination]);
+  }, [articleId, setItems]);
   const orderedItems = useMemo(() => orderComments(pagination.items), [pagination.items]);
 
   return {
     ...pagination,
     items: orderedItems,
-    retry: pagination.reset,
+    retry: reset,
     addComment,
     editComment,
     removeComment,

@@ -34,7 +34,7 @@ export function CommentSection({ articleId, onCommentCountChange = () => {} }) {
   return (
     <section className="comments-section" aria-labelledby="comments-title" aria-busy={status === 'loading' || isLoadingMore}>
       <h2 id="comments-title" className="comments-section__title">댓글</h2>
-      <CommentForm onSubmit={handleCreate} />
+      <CommentForm onSubmit={handleCreate} disabled={status !== 'success' && status !== 'empty'} />
 
       {status === 'loading' && <p className="comments-state-message" role="status">댓글을 불러오는 중…</p>}
       {status === 'empty' && <p className="comments-state-message comments-state-message--empty">첫 댓글을 남겨주세요.</p>}

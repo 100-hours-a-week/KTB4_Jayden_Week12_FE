@@ -14,6 +14,7 @@ export function CommentForm({
   onCancel,
   variant = 'create',
   autoFocus = false,
+  disabled = false,
 }) {
   const [value, setValue] = useState(initialValue);
   const [error, setError] = useState(null);
@@ -28,7 +29,7 @@ export function CommentForm({
 
   async function handleSubmit(event) {
     event.preventDefault();
-    if (!trimmedValue || submittingRef.current) return;
+    if (!trimmedValue || disabled || submittingRef.current) return;
     submittingRef.current = true;
     setIsSubmitting(true);
     setError(null);
@@ -56,16 +57,16 @@ export function CommentForm({
         value={value}
         placeholder={placeholder}
         onChange={(event) => setValue(event.target.value)}
-        disabled={isSubmitting}
+        disabled={disabled || isSubmitting}
       />
       {error && <p className="comment-form__error" role="alert">{getSubmitError(error, mode)}</p>}
       <div className={variant === 'create' ? 'comment-form__footer' : 'comment-edit-form__actions'}>
         {variant === 'create' && <span>{mode}</span>}
-        {onCancel && <button className="button button--secondary" type="button" onClick={onCancel} disabled={isSubmitting}>취소</button>}
+        {onCancel && <button className="button button--secondary" type="button" onClick={onCancel} disabled={disabled || isSubmitting}>취소</button>}
         <button
           className={`button button--primary${variant === 'create' ? ' comment-submit-button' : ''}${!trimmedValue ? ' is-disabled' : ''}`}
           type="submit"
-          disabled={!trimmedValue || isSubmitting}
+          disabled={!trimmedValue || disabled || isSubmitting}
         >
           {isSubmitting ? '처리 중…' : mode}
         </button>

@@ -66,8 +66,22 @@ describe('commentService', () => {
 
   it('댓글과 답글을 같은 endpoint와 parentCommentId 계약으로 생성한다', async () => {
     requestMock
-      .mockResolvedValueOnce({ data: { commentId: 1, parentCommentId: null, commentText: '댓글' } })
-      .mockResolvedValueOnce({ data: { commentId: 2, parentCommentId: 1, commentText: '답글' } });
+      .mockResolvedValueOnce({ data: {
+        commentId: 1,
+        userId: 7,
+        parentCommentId: null,
+        commentText: '댓글',
+        nickname: '작성자',
+        createdAt: '2026-07-19T12:34:56',
+      } })
+      .mockResolvedValueOnce({ data: {
+        commentId: 2,
+        userId: 7,
+        parentCommentId: 1,
+        commentText: '답글',
+        nickname: '작성자',
+        createdAt: '2026-07-19T12:35:56',
+      } });
 
     await createComment(12, { commentText: '댓글' });
     await createComment(12, { commentText: '답글', parentCommentId: 1 });
@@ -76,6 +90,21 @@ describe('commentService', () => {
       method: 'POST', body: { commentText: '댓글', parentCommentId: null },
     }]);
     expect(requestMock.mock.calls[1][1].body).toEqual({ commentText: '답글', parentCommentId: 1 });
+  });
+
+  it('댓글 생성 응답에 필수 필드가 없으면 계약 오류를 발생시킨다', async () => {
+    requestMock.mockResolvedValue({ data: {
+      commentId: 1,
+      parentCommentId: null,
+      commentText: '댓글',
+      nickname: '작성자',
+      createdAt: '2026-07-19T12:34:56',
+    } });
+
+    await expect(createComment(12, { commentText: '댓글' })).rejects.toMatchObject({
+      name: 'ApiContractError',
+      message: '댓글 생성 응답에 userId가 없습니다.',
+    });
   });
 
   it('댓글 수정과 삭제 endpoint를 호출한다', async () => {

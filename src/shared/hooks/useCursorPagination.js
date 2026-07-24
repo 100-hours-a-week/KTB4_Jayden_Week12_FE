@@ -83,6 +83,10 @@ export function useCursorPagination({ fetchPage, getCursor, getItemId, pageSize 
     [loadPage],
   );
   const loadMore = useCallback(() => loadPage(), [loadPage]);
+  const appendItem = useCallback((item) => {
+    setItems((currentItems) => appendUniqueById(currentItems, [item], getItemId));
+    setStatus('success');
+  }, [getItemId]);
 
   return {
     items,
@@ -94,6 +98,7 @@ export function useCursorPagination({ fetchPage, getCursor, getItemId, pageSize 
     loadMoreError,
     reset,
     loadMore,
+    appendItem,
     retryLoadMore: loadMore,
   };
 }

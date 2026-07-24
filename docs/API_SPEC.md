@@ -521,6 +521,7 @@ query parameter:
   commentId,
   parentCommentId, // 최상위 댓글은 null
   commentText,
+  userId,
   nickname,
   profileImageUrl,
   createdAt,
