@@ -1,0 +1,17 @@
+node_modules
+dist
+build
+.git
+.env
+.env.*
+npm-debug.log
+playwright-report
+test-results
+coverage
+docs
+.idea
+.vscode
+.DS_Store
+Dockerfile*
+compose*.yml
+compose*.yaml
