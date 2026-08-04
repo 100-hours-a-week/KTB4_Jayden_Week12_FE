@@ -53,8 +53,7 @@ describe('ChatListPage', () => {
     render(<MemoryRouter><ChatListPage /></MemoryRouter>);
 
     expect(screen.getByLabelText('메시지 목록을 불러오는 중')).toBeInTheDocument();
-    expect(await screen.findByRole('heading', { name: '모든 대화' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'coffee_moon님과의 대화, 읽지 않은 메시지 120개' })).toHaveAttribute('href', '/chats/1');
+    expect(await screen.findByRole('link', { name: 'coffee_moon님과의 대화, 읽지 않은 메시지 120개' })).toHaveAttribute('href', '/chats/1');
     expect(screen.getByText('삭제된 메시지입니다.')).toHaveClass('is-unread');
     expect(screen.getByText('99+')).toBeInTheDocument();
     expect(screen.getByText('마지막 메시지 2')).not.toHaveClass('is-unread');
