@@ -11,7 +11,7 @@
 .article-detail__author { display: flex; align-items: center; gap: var(--space-3); font-size: var(--font-control); }
 .article-detail__author-button,
 .article-detail__author-identity { display: inline-flex; align-items: center; gap: var(--space-3); }
-.article-detail__author-button { padding: var(--space-1); margin: calc(-1 * var(--space-1)); color: inherit; background: transparent; border-radius: var(--radius-pill); cursor: pointer; }
+.article-detail__author-button { padding: var(--space-1); margin: calc(-1 * var(--space-1)); color: inherit; background: transparent; border: 0; border-radius: var(--radius-pill); cursor: pointer; }
 .article-detail__author-button:hover { color: var(--color-primary-hover); }
 .article-detail__author-button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
 .article-detail__author time { margin-left: var(--space-6); }
