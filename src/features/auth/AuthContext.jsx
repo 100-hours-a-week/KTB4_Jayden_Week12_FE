@@ -130,3 +130,8 @@ export function useAuth() {
   if (!context) throw new Error('useAuth는 AuthProvider 안에서 사용해야 합니다.');
   return context;
 }
+
+// eslint-disable-next-line react-refresh/only-export-components
+export function useOptionalAuth() {
+  return useContext(AuthContext);
+}

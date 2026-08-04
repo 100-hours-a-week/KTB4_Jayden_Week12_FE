@@ -2,9 +2,20 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Avatar } from '../../../shared/components/Avatar.jsx';
 import { formatArticleDate, formatCount } from '../../../shared/lib/formatArticle.js';
+import { useOptionalAuth } from '../../auth/AuthContext.jsx';
+import { useOptionalChat } from '../../chat/ChatContext.jsx';
 
 export function PostCard({ article }) {
   const [showImage, setShowImage] = useState(Boolean(article.thumbnailUrl));
+  const auth = useOptionalAuth();
+  const chat = useOptionalChat();
+  const isOwnArticle = auth?.user?.userId !== undefined && String(auth.user.userId) === String(article.userId);
+  const canMessage = Boolean(chat && auth?.user && !isOwnArticle);
+  const author = {
+    userId: article.userId,
+    nickname: article.nickname,
+    profileImageUrl: article.profileImageUrl,
+  };
 
   return (
     <article className={`article-card ${showImage ? 'has-image' : 'has-no-image'}`}>
@@ -34,11 +45,23 @@ export function PostCard({ article }) {
             </time>
           </div>
         </div>
+      </Link>
+      {canMessage ? (
+        <button
+          className="article-card__author article-card__author--button"
+          type="button"
+          aria-label={`${article.nickname}님에게 메시지 보내기`}
+          onClick={() => chat.openChat(author)}
+        >
+          <Avatar src={article.profileImageUrl} name={article.nickname} />
+          <strong>{article.nickname}</strong>
+        </button>
+      ) : (
         <footer className="article-card__author">
           <Avatar src={article.profileImageUrl} name={article.nickname} />
           <strong>{article.nickname}</strong>
         </footer>
-      </Link>
+      )}
     </article>
   );
 }

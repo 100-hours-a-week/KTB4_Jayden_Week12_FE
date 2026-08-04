@@ -12,6 +12,9 @@
 .article-card__meta { display: grid; gap: var(--space-2); color: var(--color-subtle); font-size: var(--font-helper); line-height: 1.5; }
 .article-card__meta time { color: var(--color-muted); white-space: nowrap; }
 .article-card__author { display: flex; align-items: center; gap: var(--space-3); min-height: 4rem; padding: var(--space-3) var(--space-5); border-top: 1px solid var(--color-line); color: var(--color-subtle); font-size: var(--font-control); }
+.article-card__author--button { width: 100%; text-align: left; background: transparent; cursor: pointer; transition: color 160ms ease, background-color 160ms ease; }
+.article-card__author--button:hover { color: var(--color-primary-hover); background: var(--color-surface-raised); }
+.article-card__author--button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: -3px; }
 .article-card.has-no-image .article-card__media { display: none; }
 .article-card.has-no-image .article-card__body { min-height: 5.75rem; padding-top: var(--space-5); }
 .article-card.has-no-image .article-card__author { min-height: 3.5rem; padding-block: var(--space-2); }

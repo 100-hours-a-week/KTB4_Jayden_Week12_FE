@@ -4,13 +4,14 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { ApiError } from '../shared/api/ApiError.js';
 
-const { getArticleMock, incrementArticleViewMock, addArticleLikeMock, removeArticleLikeMock, deleteArticleMock, authState } = vi.hoisted(() => ({
+const { getArticleMock, incrementArticleViewMock, addArticleLikeMock, removeArticleLikeMock, deleteArticleMock, authState, openChatMock } = vi.hoisted(() => ({
   getArticleMock: vi.fn(),
   incrementArticleViewMock: vi.fn(),
   addArticleLikeMock: vi.fn(),
   removeArticleLikeMock: vi.fn(),
   deleteArticleMock: vi.fn(),
   authState: { user: { userId: 99, nickname: '다른 사용자' } },
+  openChatMock: vi.fn(),
 }));
 vi.mock('../features/articles/articleService.js', () => ({
   getArticle: getArticleMock,
@@ -23,6 +24,7 @@ vi.mock('../features/comments/components/CommentSection.jsx', () => ({
   CommentSection: ({ articleId }) => `댓글 영역 ${articleId}`,
 }));
 vi.mock('../features/auth/AuthContext.jsx', () => ({ useAuth: () => authState }));
+vi.mock('../features/chat/ChatContext.jsx', () => ({ useOptionalChat: () => ({ openChat: openChatMock }) }));
 
 import { PostDetailPage } from './PostDetailPage.jsx';
 
@@ -59,6 +61,7 @@ beforeEach(() => {
   addArticleLikeMock.mockReset().mockResolvedValue(null);
   removeArticleLikeMock.mockReset().mockResolvedValue(null);
   deleteArticleMock.mockReset();
+  openChatMock.mockReset();
   authState.user = { userId: 99, nickname: '다른 사용자' };
 });
 
@@ -113,6 +116,19 @@ describe('PostDetailPage', () => {
     await screen.findByRole('heading', { name: '클라이밍 입문기' });
     expect(screen.queryByRole('link', { name: '수정' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: '삭제' })).not.toBeInTheDocument();
+  });
+
+  it('상세 작성자 버튼으로 올바른 상대와 채팅을 연다', async () => {
+    const user = userEvent.setup();
+    getArticleMock.mockResolvedValue(article({ profileImageUrl: '/profile.jpg' }));
+    renderPage();
+
+    await user.click(await screen.findByRole('button', { name: '하비님에게 메시지 보내기' }));
+    expect(openChatMock).toHaveBeenCalledWith({
+      userId: 31,
+      nickname: '하비',
+      profileImageUrl: '/profile.jpg',
+    });
   });
 
   it('좋아요 성공 후 상태와 count를 갱신하고 다시 누르면 취소한다', async () => {

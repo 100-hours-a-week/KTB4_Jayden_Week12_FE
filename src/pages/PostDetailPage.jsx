@@ -8,6 +8,7 @@ import { CommentSection } from '../features/comments/components/CommentSection.j
 import { useAuth } from '../features/auth/AuthContext.jsx';
 import { Avatar } from '../shared/components/Avatar.jsx';
 import { formatArticleDate } from '../shared/lib/formatArticle.js';
+import { useOptionalChat } from '../features/chat/ChatContext.jsx';
 
 function ArticleSkeleton() {
   return <div className="article-skeleton" aria-label="게시글을 불러오는 중"><span /><span /><span /></div>;
@@ -15,6 +16,7 @@ function ArticleSkeleton() {
 
 export function PostDetailPage() {
   const { user } = useAuth();
+  const chat = useOptionalChat();
   const params = useParams();
   const articleId = parseArticleId(params.articleId);
   const {
@@ -27,6 +29,7 @@ export function PostDetailPage() {
     isLikePending,
     likeError,
   } = useArticleDetail(articleId);
+  const isOwnArticle = user?.userId !== undefined && user?.userId !== null && article && String(user.userId) === String(article.userId);
 
   return (
     <main id="main-content" className="article-detail-main">
@@ -56,13 +59,31 @@ export function PostDetailPage() {
                 <div>
                   <h1>{article.title}</h1>
                   <div className="article-detail__author">
-                    <Avatar src={article.profileImageUrl} name={article.nickname} />
-                    <strong>{article.nickname}</strong>
+                    {!isOwnArticle && chat ? (
+                      <button
+                        className="article-detail__author-button"
+                        type="button"
+                        aria-label={`${article.nickname}님에게 메시지 보내기`}
+                        onClick={() => chat.openChat({
+                          userId: article.userId,
+                          nickname: article.nickname,
+                          profileImageUrl: article.profileImageUrl,
+                        })}
+                      >
+                        <Avatar src={article.profileImageUrl} name={article.nickname} />
+                        <strong>{article.nickname}</strong>
+                      </button>
+                    ) : (
+                      <span className="article-detail__author-identity">
+                        <Avatar src={article.profileImageUrl} name={article.nickname} />
+                        <strong>{article.nickname}</strong>
+                      </span>
+                    )}
                     <time dateTime={article.createdAt}>{formatArticleDate(article.createdAt)}</time>
                     {article.isUpdated && <span className="article-detail__edited">(수정됨)</span>}
                   </div>
                 </div>
-                {user?.userId !== undefined && user?.userId !== null && String(user.userId) === String(article.userId) && <PostActions articleId={articleId} />}
+                {isOwnArticle && <PostActions articleId={articleId} />}
               </header>
 
               <ImageGallery images={article.imageUrls} />
