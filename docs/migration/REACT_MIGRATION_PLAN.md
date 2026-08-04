@@ -5,12 +5,12 @@
 이 문서는 바닐라 JavaScript 다중 페이지 애플리케이션을 React SPA로 전환하기 위한 최상위 계획서다. AI와 작업자는 아래 순서로 문서를 읽는다.
 
 1. `REACT_MIGRATION_PLAN.md`: 범위, 구조, 순서, 완료 기준을 확인한다.
-2. [`API_SPEC.md`](./API_SPEC.md): endpoint, 요청/응답, 인증 여부를 확인한다.
-3. 작업별 문서: 해당 단계의 상세 구현 지시를 확인한다. 인증 작업은 [`tasks/auth-migration.md`](./tasks/auth-migration.md)를 사용한다.
+2. [`../API_SPEC.md`](../API_SPEC.md): endpoint, 요청/응답, 인증 여부를 확인한다.
+3. 작업별 문서: 해당 단계의 상세 구현 지시를 확인한다. 인증 작업은 [`tasks/auth-migration.md`](tasks/auth-migration.md)를 사용한다.
 
 문서가 충돌하면 다음 우선순위를 적용한다.
 
-1. `API_SPEC.md`의 확정된 API 계약
+1. `../API_SPEC.md`의 확정된 API 계약
 2. `tasks/*.md`의 해당 작업 상세 지시
 3. 이 문서의 전체 계획
 4. 현재 레거시 코드의 실제 동작
@@ -20,7 +20,7 @@
 - JavaScript와 JSX만 사용한다. TypeScript, `.ts`, `.tsx` 파일을 만들지 않는다.
 - TanStack Query, Redux 같은 상태 관리 라이브러리를 사용하지 않는다.
 - 서버 데이터는 일반 `fetch` 기반 service 함수와 `useState`, `useEffect`로 관리한다.
-- API 경로와 응답 필드를 추측하지 않는다. 불명확하면 `API_SPEC.md`의 `확정 필요` 항목으로 남긴다.
+- API 경로와 응답 필드를 추측하지 않는다. 불명확하면 `../API_SPEC.md`의 `확정 필요` 항목으로 남긴다.
 - 한 번에 한 단계 또는 한 페이지를 변경한다. 관련 없는 리팩터링을 함께 수행하지 않는다.
 - 기존 문구, CSS class, 접근성 속성, fallback 이미지를 최대한 유지한다.
 - 레거시 결함은 그대로 복사하지 않고 이 문서의 “선행 해결 항목”에 따라 수정한다.
@@ -40,7 +40,7 @@
 
 ### 포함 범위
 
-- `index.html`, `pages/`, `js/`, `css/`, `assets/`의 프런트엔드 전체
+- `../../index.html`, `pages/`, `js/`, `../../css`, `../../assets`의 프런트엔드 전체
 - 로그인, 회원가입, 로그아웃과 refresh cookie 기반 인증
 - 게시글 목록/상세/작성/수정/삭제, 좋아요, 조회수
 - 댓글/대댓글 목록과 작성/수정/삭제
@@ -88,7 +88,7 @@
 | 테스트 | 없음 | unit/component/E2E 구성 |
 | 설정 | API 주소 `localhost:8080` 고정 | `VITE_API_BASE_URL` |
 
-현재 `package.json`은 주석이 포함되어 유효한 JSON이 아니며 실행, 빌드, 테스트 script가 없다. 첫 단계에서 정상화한다.
+현재 `../../package.json`은 주석이 포함되어 유효한 JSON이 아니며 실행, 빌드, 테스트 script가 없다. 첫 단계에서 정상화한다.
 
 ### 2.2 구현 상태 기준
 
@@ -103,7 +103,7 @@
 
 | 페이지 | 주요 기능 | 상태 | 확인된 제한/결함 | 목표 route |
 | --- | --- | --- | --- | --- |
-| `index.html` | 로그인 HTML로 즉시 이동 | 정상 | 인증 상태와 무관하게 로그인으로 이동 | `/` |
+| `../../index.html` | 로그인 HTML로 즉시 이동 | 정상 | 인증 상태와 무관하게 로그인으로 이동 | `/` |
 | `pages/auth/login.html` | 입력 검증, 로그인, token 저장 | 결함 | 실패 응답의 `data.token`에 접근 가능, loading/error 처리가 불완전 | `/login` |
 | `pages/auth/signup.html` | 이미지 preview/upload, 입력 검증, 가입 | 결함 | 실패 시 Error를 throw하지 않음, 중복 검사는 주석뿐임 | `/signup` |
 | `pages/posts/list.html` | 카드 목록, cursor 무한 스크롤, 빈/오류 UI | 부분 구현 | 재시도 버튼 미연결, template 미사용, 응답 이미지 필드가 불명확 | `/posts` |
@@ -131,7 +131,7 @@
 | P0 | helper가 Error 객체를 반환 | API 실패는 항상 throw |
 | P0 | 프로필 이미지 upload 함수 import 누락 | API service에서 올바르게 import/export |
 | P0 | 게시글 수정 시 기존 이미지 소실 | 유지/삭제/신규 URL을 구분해 서버 계약대로 전송 |
-| P0 | 가입 전/로그인 후 프로필 upload가 같은 endpoint 사용 | `API_SPEC.md`에서 인증 요구사항 확인 후 구현 |
+| P0 | 가입 전/로그인 후 프로필 upload가 같은 endpoint 사용 | `../API_SPEC.md`에서 인증 요구사항 확인 후 구현 |
 | P1 | 인증 실패 redirect 비활성화 | 명시된 인증 상태 전이와 route guard 구현 |
 | P1 | 댓글 변경 후 UI 미갱신 | 성공 후 로컬 state 갱신 또는 목록 재조회 |
 | P1 | 소유권과 초기 좋아요 상태 미연결 | 서버 응답의 확정된 필드만 사용 |
@@ -164,7 +164,7 @@
 - 보호 route에서만 anonymous 사용자를 `/login`으로 이동시킨다.
 - 인증 완료 전에는 route redirect를 실행하지 않는다.
 - 잘못된 route와 존재하지 않는 게시글은 서로 다른 404 UI로 처리한다.
-- 배포 서버는 SPA deep link를 `index.html`로 rewrite해야 한다.
+- 배포 서버는 SPA deep link를 `../../index.html`로 rewrite해야 한다.
 
 ### 3.2 디렉터리 구조
 
@@ -348,7 +348,7 @@ const [error, setError] = useState(null);
 
 ### 5.4 인증 상태 전이
 
-인증 상세 구현은 [`tasks/auth-migration.md`](./tasks/auth-migration.md)를 따른다.
+인증 상세 구현은 [`tasks/auth-migration.md`](tasksuth-migration.md)를 따른다.
 
 ```text
 앱 시작
@@ -394,7 +394,7 @@ anonymous
 - 이미지 upload 성공 후 받은 URL을 현재 form state에 보관한다.
 - 이어지는 가입/게시글 저장이 실패한 경우 같은 파일을 자동으로 다시 upload하지 않는다.
 - 사용자가 파일 선택을 변경하면 이전 upload URL을 폐기하고 새 upload를 실행한다.
-- 서버의 미사용 파일 만료/삭제 정책은 `API_SPEC.md`에서 확정 필요 항목으로 관리한다.
+- 서버의 미사용 파일 만료/삭제 정책은 `../API_SPEC.md`에서 확정 필요 항목으로 관리한다.
 
 ---
 
@@ -407,20 +407,20 @@ anonymous
 작업:
 
 - 8개 화면의 정상/빈 결과/오류 상태 screenshot과 수동 시나리오를 기록한다.
-- 실제 API 응답 fixture 또는 OpenAPI를 확보해 `API_SPEC.md`를 갱신한다.
+- 실제 API 응답 fixture 또는 OpenAPI를 확보해 `../API_SPEC.md`를 갱신한다.
 - 소유권, 좋아요 여부, 이미지 수정, upload 인증, 대댓글 정렬 정책을 확정한다.
 - 현재 기능의 정상/부분 구현/미연결/결함 상태를 브라우저와 대조한다.
 
 완료 기준:
 
-- `API_SPEC.md`에 구현을 막는 미확정 P0 항목이 없다.
+- `../API_SPEC.md`에 구현을 막는 미확정 P0 항목이 없다.
 - React 결과와 비교할 acceptance checklist가 있다.
 
 ### 1단계. React 기반 구성
 
 작업:
 
-- 유효한 `package.json`과 Vite React JavaScript scaffold를 구성한다.
+- 유효한 `../../package.json`과 Vite React JavaScript scaffold를 구성한다.
 - `dev`, `build`, `lint`, `test` script를 만든다.
 - Router와 placeholder page, 기본 404, error boundary를 구성한다.
 - 기존 CSS/asset import와 각 route의 page class 적용 방식을 정한다.
@@ -433,7 +433,7 @@ anonymous
 
 ### 2단계. 공통 API와 인증
 
-상세 작업은 [`tasks/auth-migration.md`](./tasks/auth-migration.md)를 따른다.
+상세 작업은 [`tasks/auth-migration.md`](tasksuth-migration.md)를 따른다.
 
 작업:
 
@@ -540,9 +540,9 @@ anonymous
 
 | ID | 단계 | 작업 | 필수 입력 | 산출물 | 검증 |
 | --- | --- | --- | --- | --- | --- |
-| AI-01 | 0 | 실제 응답으로 API 명세 보정 | `fetch.js`, fixture/OpenAPI | `API_SPEC.md` 갱신 | 백엔드 계약 대조 |
+| AI-01 | 0 | 실제 응답으로 API 명세 보정 | `fetch.js`, fixture/OpenAPI | `../API_SPEC.md` 갱신 | 백엔드 계약 대조 |
 | AI-02 | 1 | Vite React JavaScript scaffold | Node/배포 환경 | 실행 가능한 기반 | lint/test/build |
-| AI-03 | 1 | 기존 CSS/asset 경로 전환 | `css/`, `assets/` | style entry | route screenshot |
+| AI-03 | 1 | 기존 CSS/asset 경로 전환 | `../../css`, `../../assets` | style entry | route screenshot |
 | AI-04 | 2 | 인증 기반 구현 | API 명세, auth task | AuthContext/client/guards | auth task 전체 테스트 |
 | AI-05 | 3 | 공통 layout/UI 변환 | 기존 HTML/CSS | shared components | keyboard/ARIA |
 | AI-06 | 4 | 로그인 변환 | login HTML/JS | LoginPage/Form | 성공/실패/returnTo |
@@ -614,7 +614,7 @@ anonymous
 ## 10. 최종 산출물
 
 - React JavaScript SPA
-- 갱신된 `API_SPEC.md`
+- 갱신된 `../API_SPEC.md`
 - 공통 API client와 인증 Context
 - 공통 UI와 도메인 컴포넌트
 - unit/component/E2E 테스트

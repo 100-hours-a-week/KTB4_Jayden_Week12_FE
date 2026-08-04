@@ -30,28 +30,28 @@ Backend API
 
 | 계층 | 폴더 | 역할 |
 | --- | --- | --- |
-| 앱 조립 | `src/app` | Provider와 Router를 연결한다. |
-| 레이아웃 | `src/layouts` | 여러 페이지가 공유하는 Header와 화면 골격을 제공한다. |
-| 페이지 | `src/pages` | URL 하나에 대응하는 화면을 조합한다. |
-| 기능 | `src/features` | 게시글, 댓글, 인증, 사용자 같은 업무 기능을 구현한다. |
-| 공통 | `src/shared` | HTTP, session, 공통 UI와 공통 hook을 제공한다. |
+| 앱 조립 | `../../src/app` | Provider와 Router를 연결한다. |
+| 레이아웃 | `../../src/layouts` | 여러 페이지가 공유하는 Header와 화면 골격을 제공한다. |
+| 페이지 | `../../src/pages` | URL 하나에 대응하는 화면을 조합한다. |
+| 기능 | `../../src/features` | 게시글, 댓글, 인증, 사용자 같은 업무 기능을 구현한다. |
+| 공통 | `../../src/shared` | HTTP, session, 공통 UI와 공통 hook을 제공한다. |
 
 의존 방향은 `app → layouts/pages → features → shared`다. 아래 계층인 `shared`가 위 계층인 `features`나 `pages`를 import하면 안 된다.
 
-관련 문서: [FRONTEND_ARCHITECTURE.md](./FRONTEND_ARCHITECTURE.md)
+관련 문서: [FRONTEND_ARCHITECTURE.md](FRONTEND_ARCHITECTURE.md)
 
 ## 2. 추천 코드 읽기 순서
 
 처음부터 모든 파일을 읽지 말고 다음 순서로 읽는다.
 
-1. [main.jsx](../src/main.jsx)
-2. [App.jsx](../src/app/App.jsx)
-3. [providers.jsx](../src/app/providers.jsx)
-4. [router.jsx](../src/app/router.jsx)
-5. [PostDetailPage.jsx](../src/pages/PostDetailPage.jsx)
-6. [useArticleDetail.js](../src/features/articles/useArticleDetail.js)
-7. [articleService.js](../src/features/articles/articleService.js)
-8. [httpClient.js](../src/shared/api/httpClient.js)
+1. [main.jsx](../../src/main.jsx)
+2. [App.jsx](../../src/app/App.jsx)
+3. [providers.jsx](../../src/app/providers.jsx)
+4. [router.jsx](../../src/app/router.jsx)
+5. [PostDetailPage.jsx](../../src/pages/PostDetailPage.jsx)
+6. [useArticleDetail.js](../../src/features/articles/useArticleDetail.js)
+7. [articleService.js](../../src/features/articles/articleService.js)
+8. [httpClient.js](../../src/shared/api/httpClient.js)
 
 이 순서로 읽으면 “화면이 어떻게 API 요청까지 내려가는지”를 한 번에 볼 수 있다.
 
@@ -59,7 +59,7 @@ Backend API
 
 ### 3.1 `main.jsx`
 
-[main.jsx](../src/main.jsx)는 React 애플리케이션의 시작점이다.
+[main.jsx](../../src/main.jsx)는 React 애플리케이션의 시작점이다.
 
 ```jsx
 createRoot(document.getElementById('root')).render(<App />);
@@ -69,7 +69,7 @@ HTML에 있는 `#root` 요소를 찾고 그 안에 `<App />`을 렌더링한다.
 
 ### 3.2 Provider 구조
 
-[providers.jsx](../src/app/providers.jsx)의 구조는 다음과 같다.
+[providers.jsx](../../src/app/providers.jsx)의 구조는 다음과 같다.
 
 ```jsx
 <ToastProvider>
@@ -87,7 +87,7 @@ Provider 안쪽에 있는 모든 컴포넌트는 해당 Context의 값을 사용
 
 ## 4. Router와 컴포넌트 구조
 
-[router.jsx](../src/app/router.jsx)는 URL과 페이지를 연결한다.
+[router.jsx](../../src/app/router.jsx)는 URL과 페이지를 연결한다.
 
 ```text
 RouterProvider
@@ -224,7 +224,7 @@ const orderedItems = useMemo(() => orderComments(items), [items]);
 
 ## 7. 인증 state와 메서드
 
-[AuthContext.jsx](../src/features/auth/AuthContext.jsx)를 열어 함께 읽는다.
+[AuthContext.jsx](../../src/features/auth/AuthContext.jsx)를 열어 함께 읽는다.
 
 ### 7.1 인증 state 형태
 
@@ -276,7 +276,7 @@ refresh가 401이면 `anonymous`가 된다. 네트워크 오류나 5xx이면 사
 
 ## 8. 게시글 상세 Hook 읽기
 
-[useArticleDetail.js](../src/features/articles/useArticleDetail.js)는 게시글 상세 화면의 핵심 custom hook이다.
+[useArticleDetail.js](../../src/features/articles/useArticleDetail.js)는 게시글 상세 화면의 핵심 custom hook이다.
 
 ### 8.1 입력과 반환값
 
@@ -330,7 +330,7 @@ article = {
 }
 ```
 
-이 형태는 서버 응답을 그대로 사용하는 것이 아니다. [articleService.js](../src/features/articles/articleService.js)의 `mapArticleDetail()`이 서버 필드를 화면에서 사용하기 쉬운 이름으로 변환한다.
+이 형태는 서버 응답을 그대로 사용하는 것이 아니다. [articleService.js](../../src/features/articles/articleService.js)의 `mapArticleDetail()`이 서버 필드를 화면에서 사용하기 쉬운 이름으로 변환한다.
 
 ### 8.3 좋아요 요청에서 ID를 저장하는 이유
 
@@ -340,7 +340,7 @@ article = {
 
 ## 9. 목록과 cursor pagination
 
-[useCursorPagination.js](../src/shared/hooks/useCursorPagination.js)는 게시글 목록과 댓글 목록이 공유하는 hook이다.
+[useCursorPagination.js](../../src/shared/hooks/useCursorPagination.js)는 게시글 목록과 댓글 목록이 공유하는 hook이다.
 
 ### 9.1 입력 형태
 
@@ -388,7 +388,7 @@ useCursorPagination({
 
 ## 10. 댓글 Hook
 
-[useComments.js](../src/features/comments/useComments.js)는 공통 pagination에 댓글 작성·수정·삭제 기능을 추가한다.
+[useComments.js](../../src/features/comments/useComments.js)는 공통 pagination에 댓글 작성·수정·삭제 기능을 추가한다.
 
 ```js
 const {
@@ -433,7 +433,7 @@ Page에서 직접 복잡한 API 순서를 작성하지 않는 것이 중요하�
 
 ## 12. Form state 형태
 
-[PostForm.jsx](../src/features/articles/components/PostForm.jsx)를 예로 들면 다음 state를 사용한다.
+[PostForm.jsx](../../src/features/articles/components/PostForm.jsx)를 예로 들면 다음 state를 사용한다.
 
 ```js
 {
@@ -467,7 +467,7 @@ input은 React state와 연결된 controlled component다.
 
 ### 게시글 Service
 
-[articleService.js](../src/features/articles/articleService.js)
+[articleService.js](../../src/features/articles/articleService.js)
 
 | 메서드 | API | 의미 |
 | --- | --- | --- |
@@ -482,7 +482,7 @@ input은 React state와 연결된 controlled component다.
 
 ### 사용자 Service
 
-[userService.js](../src/features/user/userService.js)
+[userService.js](../../src/features/user/userService.js)
 
 | 메서드 | 의미 |
 | --- | --- |
@@ -494,7 +494,7 @@ input은 React state와 연결된 controlled component다.
 
 ## 14. HTTP Client 이해하기
 
-[httpClient.js](../src/shared/api/httpClient.js)의 `request()`가 모든 service 요청의 공통 기반이다.
+[httpClient.js](../../src/shared/api/httpClient.js)의 `request()`가 모든 service 요청의 공통 기반이다.
 
 ```js
 request('/articles', {
@@ -532,7 +532,7 @@ request('/articles', {
 
 ## 15. Runtime API 계약 검증
 
-[contracts.js](../src/shared/api/contracts.js)는 서버 응답이 예상 형태인지 실행 중 확인한다.
+[contracts.js](../../src/shared/api/contracts.js)는 서버 응답이 예상 형태인지 실행 중 확인한다.
 
 | 함수 | 의미 |
 | --- | --- |
@@ -546,7 +546,7 @@ request('/articles', {
 
 ### ConfirmDialog
 
-[ConfirmDialog.jsx](../src/shared/components/ConfirmDialog.jsx)는 게시글 삭제, 댓글 삭제, 회원 탈퇴에서 사용한다.
+[ConfirmDialog.jsx](../../src/shared/components/ConfirmDialog.jsx)는 게시글 삭제, 댓글 삭제, 회원 탈퇴에서 사용한다.
 
 ```jsx
 <ConfirmDialog
@@ -562,7 +562,7 @@ Escape 닫기, Tab 순환, 처음 열었을 때 취소 버튼 focus, 닫힌 후 
 
 ### Toast
 
-[ToastContext.jsx](../src/shared/components/ToastContext.jsx)의 `useToast()`를 사용한다.
+[ToastContext.jsx](../../src/shared/components/ToastContext.jsx)의 `useToast()`를 사용한다.
 
 ```js
 const { showToast } = useToast();
@@ -575,27 +575,27 @@ Provider가 Router보다 바깥에 있으므로 페이지 이동 후에도 toast
 
 ### 로그인
 
-1. [LoginPage.jsx](../src/pages/LoginPage.jsx)의 form submit을 찾는다.
+1. [LoginPage.jsx](../../src/pages/LoginPage.jsx)의 form submit을 찾는다.
 2. `useAuth().login()` 호출을 확인한다.
-3. [AuthContext.jsx](../src/features/auth/AuthContext.jsx)의 `login`을 읽는다.
-4. [authService.js](../src/features/auth/authService.js)의 로그인 요청을 읽는다.
-5. [httpClient.js](../src/shared/api/httpClient.js)의 `request`까지 내려간다.
+3. [AuthContext.jsx](../../src/features/auth/AuthContext.jsx)의 `login`을 읽는다.
+4. [authService.js](../../src/features/auth/authService.js)의 로그인 요청을 읽는다.
+5. [httpClient.js](../../src/shared/api/httpClient.js)의 `request`까지 내려간다.
 6. 성공 후 `user`, `status`가 어떻게 바뀌는지 확인한다.
 
 ### 게시글 상세와 좋아요
 
-1. [PostDetailPage.jsx](../src/pages/PostDetailPage.jsx)에서 `useParams()`를 찾는다.
+1. [PostDetailPage.jsx](../../src/pages/PostDetailPage.jsx)에서 `useParams()`를 찾는다.
 2. `useArticleDetail(articleId)` 반환값을 확인한다.
 3. `PostStats`에 `toggleLike`가 props로 전달되는지 확인한다.
-4. [useArticleDetail.js](../src/features/articles/useArticleDetail.js)의 `toggleLike`를 읽는다.
-5. [articleService.js](../src/features/articles/articleService.js)의 좋아요 endpoint를 확인한다.
+4. [useArticleDetail.js](../../src/features/articles/useArticleDetail.js)의 `toggleLike`를 읽는다.
+5. [articleService.js](../../src/features/articles/articleService.js)의 좋아요 endpoint를 확인한다.
 
 ### 댓글 작성
 
-1. [CommentSection.jsx](../src/features/comments/components/CommentSection.jsx)의 `handleCreate`를 찾는다.
-2. [useComments.js](../src/features/comments/useComments.js)의 `addComment`를 확인한다.
+1. [CommentSection.jsx](../../src/features/comments/components/CommentSection.jsx)의 `handleCreate`를 찾는다.
+2. [useComments.js](../../src/features/comments/useComments.js)의 `addComment`를 확인한다.
 3. POST 성공 후 `pagination.reset()`을 호출하는 이유를 생각한다.
-4. [useCursorPagination.js](../src/shared/hooks/useCursorPagination.js)에서 기존 GET을 abort하는 코드를 찾는다.
+4. [useCursorPagination.js](../../src/shared/hooks/useCursorPagination.js)에서 기존 GET을 abort하는 코드를 찾는다.
 
 ## 18. 코드를 수정할 때 지켜야 할 기준
 
@@ -621,7 +621,7 @@ Provider가 Router보다 바깥에 있으므로 페이지 이동 후에도 toast
 - `PostDetailPage.jsx` → `PostDetailPage.test.jsx`
 - `AuthContext.jsx` → `AuthContext.test.jsx`
 
-[renderWithProviders.jsx](../src/test/renderWithProviders.jsx)는 Router와 ToastProvider가 필요한 페이지 테스트를 쉽게 렌더링한다. [fixtures.js](../src/test/fixtures.js)는 테스트용 사용자, 게시글, 댓글 객체를 만든다.
+[renderWithProviders.jsx](../../src/test/renderWithProviders.jsx)는 Router와 ToastProvider가 필요한 페이지 테스트를 쉽게 렌더링한다. [fixtures.js](../../src/test/fixtures.js)는 테스트용 사용자, 게시글, 댓글 객체를 만든다.
 
 검증 명령:
 

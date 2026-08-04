@@ -15,7 +15,7 @@
 - `확정 필요` 필드를 임의 이름으로 구현하지 않는다.
 - 응답이 문서와 다르면 mapper에서 숨기지 말고 이 문서를 먼저 갱신한다.
 - API 실패는 Error 객체를 반환하지 않고 반드시 throw한다.
-- 보호 API의 인증/재시도 동작은 [`tasks/auth-migration.md`](./tasks/auth-migration.md)를 따른다.
+- 보호 API의 인증/재시도 동작은 [`migration/tasks/auth-migration.md`](migration/tasks/auth-migration.md)를 따른다.
 - TypeScript type을 만들지 않는다. 필요한 타입 설명은 JSDoc 또는 이 문서의 필드 표를 사용한다.
 
 ---
@@ -223,7 +223,7 @@ response.data.accessToken
 }
 ```
 
-- `profileImageUrl`이 없으면 `assets/images/default-profile.svg`를 사용한다.
+- `profileImageUrl`이 없으면 `../assets/images/default-profile.svg`를 사용한다.
 
 
 ### 4.3 내 정보 수정
@@ -601,12 +601,12 @@ query parameter:
 
 | 파일 | 책임 |
 | --- | --- |
-| `src/shared/api/httpClient.js` | base URL, JSON/FormData, auth header, 401 1회 재시도, `ApiError` |
-| `src/features/auth/authService.js` | login, refresh, logout |
-| `src/features/user/userService.js` | 내 정보, 수정, 비밀번호, 탈퇴 |
-| `src/features/images/imageService.js` | 프로필/게시글 이미지 upload |
-| `src/features/articles/articleService.js` | 게시글 CRUD, 좋아요, 조회수 |
-| `src/features/comments/commentService.js` | 댓글/대댓글 조회와 CRUD |
+| `../src/shared/api/httpClient.js` | base URL, JSON/FormData, auth header, 401 1회 재시도, `ApiError` |
+| `../src/features/auth/authService.js` | login, refresh, logout |
+| `../src/features/user/userService.js` | 내 정보, 수정, 비밀번호, 탈퇴 |
+| `../src/features/images/imageService.js` | 프로필/게시글 이미지 upload |
+| `../src/features/articles/articleService.js` | 게시글 CRUD, 좋아요, 조회수 |
+| `../src/features/comments/commentService.js` | 댓글/대댓글 조회와 CRUD |
 
 service 함수는 UI state를 변경하거나 route를 이동하지 않는다. API 요청과 응답 반환만 담당한다.
 

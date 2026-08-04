@@ -6,9 +6,9 @@
 
 기준 문서의 우선순위는 다음과 같다.
 
-1. [`API_SPEC.md`](./API_SPEC.md)의 확정된 API 계약
+1. [`../API_SPEC.md`](../API_SPEC.md)의 확정된 API 계약
 2. 이 문서의 잔여 작업 계획
-3. [`REACT_MIGRATION_PLAN.md`](./REACT_MIGRATION_PLAN.md)의 전체 계획
+3. [`REACT_MIGRATION_PLAN.md`](REACT_MIGRATION_PLAN.md)의 전체 계획
 4. 현재 레거시 HTML/JavaScript 동작
 
 기존 마이그레이션 규칙을 그대로 적용한다.
@@ -65,13 +65,13 @@
 | P1 | 핵심 E2E 회귀 테스트 | 부분 완료 | Playwright 기반과 핵심 시나리오 3개 구성 |
 | P2 | 오류 코드별 폼 메시지 | 부분 구현 | 중복 오류의 안정적인 `code`와 field 매핑 |
 | P2 | staging/배포 전환 검증 | 미검증 | 배포 환경과 백엔드 연결 |
-| P2 | 레거시 파일 격리 | 완료 | `legacy/`에 rollback 참고용으로 보존 |
+| P2 | 레거시 파일 격리 | 완료 | `../../legacy`에 rollback 참고용으로 보존 |
 
 ---
 
 ## 3. 선행 API 계약 확정
 
-이 단계는 임의 필드 구현을 방지하기 위한 P0 작업이다. 확인한 계약은 먼저 `API_SPEC.md`에 반영한다.
+이 단계는 임의 필드 구현을 방지하기 위한 P0 작업이다. 확인한 계약은 먼저 `../API_SPEC.md`에 반영한다.
 
 ### 3.1 좋아요 초기 상태
 
@@ -119,7 +119,7 @@
 
 ### 3.5 P0 완료 기준
 
-- 위 계약이 `API_SPEC.md`에 확정 상태로 기록되어 있다.
+- 위 계약이 `../API_SPEC.md`에 확정 상태로 기록되어 있다.
 - 좋아요, 소유권, 프로필 이미지 구현에 추측 필드가 필요하지 않다.
 - 정상/오류 응답 fixture 또는 OpenAPI 예시를 확보한다.
 
@@ -281,7 +281,7 @@ Playwright와 `test:e2e` script를 추가했으며 route mocking으로 다음 �
 
 ## 6. 레거시 제거와 전환
 
-React에서 사용하지 않는 HTML/JavaScript는 `legacy/`로 격리했고, 미사용 `RoutePlaceholderPage`는 제거했다. `css/`와 `assets/`는 React가 계속 사용하므로 유지한다.
+React에서 사용하지 않는 HTML/JavaScript는 `../../legacy`로 격리했고, 미사용 `RoutePlaceholderPage`는 제거했다. `../../css`와 `../../assets`는 React가 계속 사용하므로 유지한다.
 
 ### 제거 후보
 
@@ -292,7 +292,7 @@ React에서 사용하지 않는 HTML/JavaScript는 `legacy/`로 격리했고, �
 - React에서 사용하지 않는 `js/common/**`, `js/constants/**`
 - 미사용 `src/pages/RoutePlaceholderPage.jsx`
 
-`css/`와 `assets/`는 React가 계속 사용하므로 사용 여부를 파일별로 확인하기 전에는 제거하지 않는다.
+`../../css`와 `../../assets`는 React가 계속 사용하므로 사용 여부를 파일별로 확인하기 전에는 제거하지 않는다.
 
 ### 제거 절차
 
@@ -319,7 +319,7 @@ React에서 사용하지 않는 HTML/JavaScript는 `legacy/`로 격리했고, �
 
 | 순서 | 작업 단위 | 구현 가능 여부 |
 | --- | --- | --- |
-| 1 | API 계약 확인 및 `API_SPEC.md` 갱신 | 백엔드 확인 필요 |
+| 1 | API 계약 확인 및 `../API_SPEC.md` 갱신 | 백엔드 확인 필요 |
 | 2 | 좋아요 기능 | 완료 |
 | 3 | 소유권 판별 교체 | 완료 |
 | 4 | 프로필 이미지 업로드 | 완료 |
@@ -344,7 +344,7 @@ React에서 사용하지 않는 HTML/JavaScript는 `legacy/`로 격리했고, �
 - 모바일/데스크톱 및 키보드 접근성 검증을 통과한다.
 - staging에서 CORS, cookie, 환경 변수, SPA rewrite가 검증된다.
 - 승인된 레거시 파일이 제거되고 rollback 절차가 준비되어 있다.
-- `API_SPEC.md`에 구현을 막는 `확정 필요` 항목이 남아 있지 않다.
+- `../API_SPEC.md`에 구현을 막는 `확정 필요` 항목이 남아 있지 않다.
 
 ---
 

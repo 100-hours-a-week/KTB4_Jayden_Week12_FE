@@ -31,10 +31,10 @@ app → layouts/pages → features → shared
 
 ## 테스트
 
-- 공통 renderer: `src/test/renderWithProviders.jsx`
-- fixture factory: `src/test/fixtures.js`
+- 공통 renderer: `../../src/test/renderWithProviders.jsx`
+- fixture factory: `../../src/test/fixtures.js`
 - 검증 명령: `npm run lint`, `npm test -- --run`, `npm run build`, `npm run test:e2e`
 
 ## Legacy
 
-이전 HTML/JavaScript 구현은 rollback 참고용으로 `legacy/`에 격리한다. 현재 Vite 빌드와 lint 대상에는 포함하지 않는다.
+이전 HTML/JavaScript 구현은 rollback 참고용으로 `../../legacy`에 격리한다. 현재 Vite 빌드와 lint 대상에는 포함하지 않는다.

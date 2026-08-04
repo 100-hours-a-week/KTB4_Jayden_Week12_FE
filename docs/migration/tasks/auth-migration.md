@@ -8,7 +8,7 @@
 | 상태 | 구현 준비 |
 | 우선순위 | P0 |
 | 선행 작업 | Vite React JavaScript scaffold, `VITE_API_BASE_URL` |
-| 선행 문서 | [`../REACT_MIGRATION_PLAN.md`](../REACT_MIGRATION_PLAN.md), [`../API_SPEC.md`](../API_SPEC.md) |
+| 선행 문서 | [`../REACT_MIGRATION_PLAN.md`](../REACT_MIGRATION_PLAN.md), [`../../API_SPEC.md`](../../API_SPEC.md) |
 | 결과 | AuthContext, token/refresh, route guard, 인증 테스트 |
 
 AI는 이 task 범위만 구현하고 인증 화면의 상세 디자인이나 다른 page 마이그레이션을 함께 수행하지 않는다.
