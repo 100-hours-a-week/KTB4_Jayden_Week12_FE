@@ -21,6 +21,50 @@ async function mockAuthenticatedUser(page, user = {
   });
 }
 
+test('타인 작성자 버튼은 기본 버튼 테두리 없이 카드 구분선과 포커스 표시를 유지한다', async ({ page }) => {
+  await mockAuthenticatedUser(page);
+  const otherUserArticle = {
+    articleId: 12,
+    userId: 2,
+    title: '작성자 버튼 스타일 테스트',
+    content: '본문',
+    contentImageUrls: [],
+    nickname: '다른 사용자',
+    profileImageUrl: null,
+    likedByMe: false,
+    createdAt: '2026-07-19T12:00:00',
+    updatedAt: null,
+    articleLikeCount: 0,
+    articleViewCount: 1,
+    commentCount: 0,
+  };
+
+  await page.route('**/articles?*', (route) => fulfillJson(route, { data: [otherUserArticle] }));
+  await page.route('**/articles/12', (route) => fulfillJson(route, { data: otherUserArticle }));
+  await page.route('**/articles/12/comments?*', (route) => fulfillJson(route, { data: [] }));
+  await page.route('**/views/articles/12', (route) => route.fulfill({ status: 204 }));
+
+  await page.goto('/posts');
+  const cardAuthorButton = page.getByRole('button', { name: '다른 사용자님에게 메시지 보내기' });
+  await expect(cardAuthorButton).toBeVisible();
+  await expect(cardAuthorButton).toHaveCSS('border-top-width', '1px');
+  await expect(cardAuthorButton).toHaveCSS('border-right-width', '0px');
+  await expect(cardAuthorButton).toHaveCSS('border-bottom-width', '0px');
+  await expect(cardAuthorButton).toHaveCSS('border-left-width', '0px');
+  await cardAuthorButton.focus();
+  await expect(cardAuthorButton).toHaveCSS('outline-style', 'solid');
+
+  await page.goto('/posts/12');
+  const detailAuthorButton = page.getByRole('button', { name: '다른 사용자님에게 메시지 보내기' });
+  await expect(detailAuthorButton).toBeVisible();
+  await expect(detailAuthorButton).toHaveCSS('border-top-width', '0px');
+  await expect(detailAuthorButton).toHaveCSS('border-right-width', '0px');
+  await expect(detailAuthorButton).toHaveCSS('border-bottom-width', '0px');
+  await expect(detailAuthorButton).toHaveCSS('border-left-width', '0px');
+  await detailAuthorButton.focus();
+  await expect(detailAuthorButton).toHaveCSS('outline-style', 'solid');
+});
+
 test('미인증 상세 deep link는 로그인 후 원래 URL로 복귀한다', async ({ page }) => {
   await page.route('**/auth/token/refresh', (route) => fulfillJson(route, { message: 'unauthorized' }, 401));
   await page.route('**/auth/login', (route) => fulfillJson(route, { data: { token: { accessToken: 'login-token' } } }));
