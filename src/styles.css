@@ -19,6 +19,7 @@
 @import './features/articles/articles.css';
 @import './features/comments/comments.css';
 @import './features/user/user.css';
+@import './features/chat/chat.css';
 @import './shared/styles/confirm-dialog.css';
 
 .placeholder-page { display: grid; place-content: center; gap: var(--space-4); min-height: 100vh; padding: var(--space-6); text-align: center; }
