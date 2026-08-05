@@ -26,7 +26,7 @@
 - 실제 응답이 문서와 다르면 mapper에서 차이를 숨기지 말고 이 문서를 먼저 갱신한다.
 - REST API 실패는 `Error` 객체를 반환값으로 돌려주지 않고 반드시 `throw`한다.
 - STOMP 오류 이벤트도 성공 데이터로 변환하지 않는다. 구독 계층에서 오류로 전파한다.
-- 보호 API의 인증 및 재시도 동작은 별도 단일 기준 문서인 `migration/tasks/auth-migration.md`를 따른다. 해당 문서는 React 인증 구현 전에 작성되어야 하며, 채팅 API 문서에 별도 재시도 정책을 중복 정의하지 않는다.
+- 보호 API의 인증 및 재시도 동작은 별도 단일 기준 문서인 `../migration/tasks/auth-migration.md`를 따른다. 해당 문서는 React 인증 구현 전에 작성되어야 하며, 채팅 API 문서에 별도 재시도 정책을 중복 정의하지 않는다.
 - TypeScript `type` 또는 `interface`를 만들지 않는다. 필요한 타입 정보는 JSDoc 또는 이 문서의 필드 표를 사용한다.
 - 이 문서에 `nullable`로 표시되지 않은 응답 필드를 임의로 optional 처리하지 않는다.
 
@@ -474,7 +474,7 @@ validation, 인증, 인가, 업무 오류는 모두 아래 envelope 없는 bare 
 | B13 | 중복 방 퇴장을 멱등 처리 | 두 번째 이후 DELETE도 같은 `200`과 `roomId` 반환 | **서버 확인** |
 | B14 | 외부 노출 ID의 안전 정수 범위 보장 | 범위 검증/모니터링과 경계 테스트 통과 | **서버 확인** |
 | B15 | 배포 경로를 동일 origin reverse proxy로 구성 | REST 상대 경로와 `/ws-chat` upgrade 운영 검증 | **서버 확인** |
-| B16 | 인증 계약 문서 작성 | `migration/tasks/auth-migration.md`가 React 인증 구현 전에 확정됨 | **서버 확인** |
+| B16 | 인증 계약 문서 작성 | `../migration/tasks/auth-migration.md`가 React 인증 구현 전에 확정됨 | **서버 확인** |
 
 ## 7. 최종 확정 계약 요약
 
@@ -492,7 +492,7 @@ validation, 인증, 인가, 업무 오류는 모두 아래 envelope 없는 bare 
 - 삭제 메시지는 `content: null` tombstone으로 timeline 유지
 - 모든 외부 ID는 JSON `number`이며 JavaScript 안전 정수 범위를 서버가 보장
 - 배포 환경은 동일 origin reverse proxy만 사용
-- 인증 갱신/재시도 계약은 `migration/tasks/auth-migration.md`에서 별도 관리
+- 인증 갱신/재시도 계약은 `../migration/tasks/auth-migration.md`에서 별도 관리
 
 현재 **확정 필요**로 남은 채팅 도메인 계약은 없다.
 

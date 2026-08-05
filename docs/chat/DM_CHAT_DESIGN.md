@@ -4,11 +4,11 @@
 
 게시글 목록과 게시글 상세에서 작성자 영역을 누르면 해당 작성자와 1:1 DM을 주고받을 수 있는 채팅 모달을 연다. 이번 구현은 텍스트 실시간 송수신과 연결 수명 주기에 집중한다.
 
-상단 채팅 알림 아이콘, 채팅방 목록, 목록에서 진입하는 대화 페이지와 읽음 상태는 후속 문서인 [`CHAT_LIST_DESIGN.md`](./CHAT_LIST_DESIGN.md)에서 다룬다. 이 문서의 `채팅방 목록 제외`, `이전 메시지 제외`는 게시글 작성자에서 바로 여는 초기 모달만 단독 구현할 때의 범위다.
+상단 채팅 알림 아이콘, 채팅방 목록, 목록에서 진입하는 대화 페이지와 읽음 상태는 후속 문서인 [`CHAT_LIST_DESIGN.md`](CHAT_LIST_DESIGN.md)에서 다룬다. 이 문서의 `채팅방 목록 제외`, `이전 메시지 제외`는 게시글 작성자에서 바로 여는 초기 모달만 단독 구현할 때의 범위다.
 
 이 문서의 기준은 다음과 같다.
 
-- API 단일 기준: [`chat-api-spec.md`](./chat-api-spec.md)
+- API 단일 기준: [`chat-api-spec.md`](chat-api-spec.md)
 - 프런트엔드: 현재 React 애플리케이션 구조
 - 프로토콜: STOMP over WebSocket
 - WebSocket endpoint: `/ws-chat`
