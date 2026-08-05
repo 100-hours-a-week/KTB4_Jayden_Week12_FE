@@ -346,15 +346,19 @@ src/
 │   └── providers.jsx                       # ChatProvider 조립
 ├── features/
 │   └── chat/
-│       ├── ChatContext.jsx                 # 전역 openChat/closeChat 진입점
+│       ├── ChatProvider.jsx                # session/unread provider 조립
+│       ├── ChatSessionContext.jsx          # openChat/openRoom/closeChat 진입점
+│       ├── ChatUnreadContext.jsx           # 전체 unread REST polling
 │       ├── chatService.js                  # direct room/history REST API와 DTO 검증
 │       ├── chatSocket.js                   # STOMP client 생성/연결/구독/발행/재인증
 │       ├── chatContracts.js                # REST와 STOMP wire shape JSDoc/validator
 │       ├── useChatSession.js               # 상태 전이와 cleanup
 │       ├── chat.css
 │       └── components/
+│           ├── ChatModalHost.jsx
 │           ├── ChatModal.jsx
-│           ├── ChatHeader.jsx
+│           ├── ChatModalHeader.jsx
+│           ├── ChatConversation.jsx
 │           ├── MessageList.jsx
 │           ├── MessageBubble.jsx
 │           └── MessageComposer.jsx
@@ -362,7 +366,7 @@ src/
     └── session/tokenStore.js               # 기존 getAccessToken 재사용
 ```
 
-`ChatProvider`를 `AuthProvider` 안쪽, `RouterProvider` 바깥쪽에 둔다. 목록과 상세 어디에서든 `useChat().openChat(author)`를 호출할 수 있고, route가 바뀌어도 cleanup 정책을 한곳에서 관리할 수 있다. 이후 전역 unread 실시간 구독을 적용할 때도 같은 provider가 STOMP client를 소유하고 모달과 대화 페이지는 room subscription만 추가·제거한다.
+`ChatProvider`를 `AuthProvider` 안쪽, `RouterProvider` 바깥쪽에 둔다. 게시글에서는 `useOptionalChatSession().openChat(author)`, 채팅방에서는 `useChatSessionContext().openRoom(roomId)`를 사용한다. 대화가 열려 있을 때만 session이 STOMP client를 소유하고, 전역 unread는 분리된 context의 REST polling으로 관리한다.
 
 ```jsx
 <AuthProvider>
@@ -487,7 +491,7 @@ API endpoint, 인증, DTO, echo, 제한값은 `chat-api-spec.md`에서 모두 �
 - **B. 모달은 연 이후의 메시지만 표시한다.**
   - 초기 구현 범위는 작지만 기존 대화를 열어도 빈 화면으로 시작하며 page shell과 동작이 달라진다.
 
-선택 표기: `Q1-A` 또는 `Q1-B`
+선택: **Q1-A**. 모달과 `/chats/:roomId`가 같은 session history와 `ChatConversation`을 사용한다.
 
 ### Q2. STOMP client 수명 주기
 
@@ -498,4 +502,4 @@ API endpoint, 인증, DTO, echo, 제한값은 `chat-api-spec.md`에서 모두 �
   - 대화가 닫히면 `deactivate()`하며, 헤더 unread는 REST polling에 의존한다.
   - 연결 횟수는 늘지만 전역 socket lifecycle 구현 범위는 작다.
 
-선택 표기: `Q2-A` 또는 `Q2-B`
+선택: **Q2-B**. 모달과 대화 페이지가 열려 있을 때만 STOMP client를 연결하고 전역 unread는 REST polling으로 동기화한다.

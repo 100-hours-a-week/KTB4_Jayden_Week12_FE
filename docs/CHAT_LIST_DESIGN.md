@@ -376,30 +376,39 @@ src/
 │   └── ChatRoomPage.jsx
 └── features/
     └── chat/
-        ├── ChatContext.jsx
+        ├── ChatProvider.jsx
+        ├── ChatSessionContext.jsx
+        ├── ChatUnreadContext.jsx
+        ├── chatMessageModel.js
+        ├── chatSessionReducer.js
         ├── chatService.js
         ├── chatSocket.js
         ├── chatContracts.js
         ├── useChatList.js
         ├── useUnreadMessages.js
         ├── useChatSession.js
+        ├── useChatReadReceipt.js
         ├── chat.css
         └── components/
             ├── ChatNotificationButton.jsx
-            ├── ChatRoomList.jsx
+            ├── ChatListContent.jsx
             ├── ChatRoomCard.jsx
+            ├── ChatModalHost.jsx
+            ├── ChatModal.jsx
             └── ChatConversation.jsx
 ```
 
 역할:
 
-- `ChatContext`: STOMP client, `totalUnreadCount`, user queue와 재인증 lifecycle
+- `ChatSessionContext`: 대화 session과 modal 진입점
+- `ChatUnreadContext`: 전체 unread count와 REST polling lifecycle
 - `chatService`: 방 정보, 목록, count, history REST API 및 DTO validation
 - `chatSocket`: STOMP 연결, 메시지/읽음 발행, room/user 구독 adapter
 - `chatContracts`: REST와 STOMP의 서로 다른 wire shape JSDoc 및 runtime validator
 - `useChatList`: 복합 cursor pagination, `chatRoomId` dedupe와 실시간 목록 갱신
-- `useUnreadMessages`: 초기/focus/재연결 REST 동기화와 user event 반영
-- `useChatSession`: 선택한 방 정보, room 구독, history 병합, 읽음 처리 및 cleanup
+- `useUnreadMessages`: 초기/focus/30초 REST 동기화
+- `useChatSession`: 선택한 방 정보, room 구독, history 병합, 재인증 및 cleanup
+- `useChatReadReceipt`: visible 상태, 읽음 debounce, receipt 확인과 REST fallback
 - `ChatConversation`: 모달과 page shell이 공유하는 대화 UI
 
 `ChatProvider`는 기존 설계대로 `AuthProvider` 안쪽, `RouterProvider` 바깥쪽에 두며 로그인 사용자 변경 또는 logout 때 count, 요청, 구독, socket state를 모두 초기화한다. TypeScript `type` 또는 `interface`를 추가하지 않고 JSDoc와 validator를 사용한다.
@@ -540,7 +549,9 @@ API endpoint, pagination, unread 응답, history, 읽음 destination과 삭제 �
   - 대화가 닫히면 `deactivate()`하고 헤더 unread는 30초 polling으로 갱신한다.
   - 전역 실시간 목록 갱신은 제공하지 않는다.
 
-이 선택은 `DM_CHAT_DESIGN.md`의 `Q2`와 같은 항목이므로 두 문서에 동일하게 적용한다. 선택 표기: `Q1-A` 또는 `Q1-B`
+이 선택은 `DM_CHAT_DESIGN.md`의 `Q2`와 같은 항목이므로 두 문서에 동일하게 적용한다.
+
+선택: **Q1-B**. 대화가 열려 있을 때만 STOMP client를 연결하고, header unread와 열린 채팅 목록은 focus 및 30초 REST polling으로 재동기화한다.
 
 ### Q2. 채팅 화면 뒤로가기 위치
 
@@ -552,4 +563,4 @@ API endpoint, pagination, unread 응답, history, 읽음 destination과 삭제 �
 - **B. 채팅 page가 자체 뒤로가기를 소유한다.**
   - chat route에서는 공통 Header의 뒤로가기를 숨기고 page shell의 버튼을 사용한다.
 
-선택 표기: `Q2-A` 또는 `Q2-B`
+선택: **Q2-A**. 공통 Header가 채팅 목록과 채팅방의 이전 화면 이동을 소유하고 page 본문은 별도 뒤로가기 button을 렌더링하지 않는다.
