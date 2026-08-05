@@ -3,12 +3,12 @@ import { Link } from 'react-router-dom';
 import { Avatar } from '../../../shared/components/Avatar.jsx';
 import { formatArticleDate, formatCount } from '../../../shared/lib/formatArticle.js';
 import { useOptionalAuth } from '../../auth/AuthContext.jsx';
-import { useOptionalChat } from '../../chat/ChatContext.jsx';
+import { useOptionalChatSession } from '../../chat/ChatSessionContext.jsx';
 
 export function PostCard({ article }) {
   const [showImage, setShowImage] = useState(Boolean(article.thumbnailUrl));
   const auth = useOptionalAuth();
-  const chat = useOptionalChat();
+  const chat = useOptionalChatSession();
   const isOwnArticle = auth?.user?.userId !== undefined && String(auth.user.userId) === String(article.userId);
   const canMessage = Boolean(chat && auth?.user && !isOwnArticle);
   const author = {

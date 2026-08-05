@@ -8,7 +8,7 @@ import { CommentSection } from '../features/comments/components/CommentSection.j
 import { useAuth } from '../features/auth/AuthContext.jsx';
 import { Avatar } from '../shared/components/Avatar.jsx';
 import { formatArticleDate } from '../shared/lib/formatArticle.js';
-import { useOptionalChat } from '../features/chat/ChatContext.jsx';
+import { useOptionalChatSession } from '../features/chat/ChatSessionContext.jsx';
 
 function ArticleSkeleton() {
   return <div className="article-skeleton" aria-label="게시글을 불러오는 중"><span /><span /><span /></div>;
@@ -16,7 +16,7 @@ function ArticleSkeleton() {
 
 export function PostDetailPage() {
   const { user } = useAuth();
-  const chat = useOptionalChat();
+  const chat = useOptionalChatSession();
   const params = useParams();
   const articleId = parseArticleId(params.articleId);
   const {

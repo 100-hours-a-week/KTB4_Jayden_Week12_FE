@@ -22,7 +22,7 @@ function parseFrame(frame) {
   }
 }
 
-export function createChatSocket({ accessToken, onDisconnect }) {
+export function createChatSocket({ accessToken, onDisconnect, onProtocolError }) {
   let intentionallyClosing = false;
   let settled = false;
   let rejectConnection;
@@ -63,7 +63,13 @@ export function createChatSocket({ accessToken, onDisconnect }) {
   return {
     connect,
     subscribe(destination, onMessage) {
-      return client.subscribe(destination, (frame) => onMessage(parseFrame(frame)));
+      return client.subscribe(destination, (frame) => {
+        try {
+          Promise.resolve(onMessage(parseFrame(frame))).catch((error) => onProtocolError?.(error));
+        } catch (error) {
+          onProtocolError?.(error);
+        }
+      });
     },
     publishMessage(roomId, payload) {
       client.publish({

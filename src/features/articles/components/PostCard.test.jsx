@@ -8,7 +8,9 @@ const { authState, openChatMock } = vi.hoisted(() => ({
   openChatMock: vi.fn(),
 }));
 vi.mock('../../auth/AuthContext.jsx', () => ({ useOptionalAuth: () => authState }));
-vi.mock('../../chat/ChatContext.jsx', () => ({ useOptionalChat: () => ({ openChat: openChatMock }) }));
+vi.mock('../../chat/ChatSessionContext.jsx', () => ({
+  useOptionalChatSession: () => ({ openChat: openChatMock }),
+}));
 
 import { PostCard } from './PostCard.jsx';
 

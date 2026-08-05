@@ -11,8 +11,8 @@ vi.mock('../features/chat/chatService.js', () => ({
   CHAT_ROOM_PAGE_SIZE: 20,
   getChatRooms: getChatRoomsMock,
 }));
-vi.mock('../features/chat/ChatContext.jsx', () => ({
-  useChat: () => ({ refreshUnread: refreshUnreadMock }),
+vi.mock('../features/chat/ChatUnreadContext.jsx', () => ({
+  useChatUnread: () => ({ refreshUnread: refreshUnreadMock }),
 }));
 
 import { ChatListPage } from './ChatListPage.jsx';
@@ -84,5 +84,58 @@ describe('ChatListPage', () => {
     expect(await screen.findByText('메시지 목록을 불러오지 못했어요.')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: '다시 시도' }));
     expect(await screen.findByText('마지막 메시지 1')).toBeInTheDocument();
+  });
+
+  it('빈 목록 안내를 표시한다', async () => {
+    getChatRoomsMock.mockResolvedValue([]);
+    render(<MemoryRouter><ChatListPage /></MemoryRouter>);
+
+    expect(await screen.findByText('아직 시작된 대화가 없어요.')).toBeInTheDocument();
+    expect(screen.getByText('게시글 작성자에게 먼저 메시지를 보내보세요.')).toBeInTheDocument();
+  });
+
+  it('focus 시 첫 페이지를 다시 받아 기존 추가 페이지와 병합한다', async () => {
+    const firstPage = Array.from({ length: 20 }, (_, index) => room(index + 1));
+    const refreshedFirstPage = [
+      room(99, { content: '방금 도착한 메시지' }),
+      ...Array.from({ length: 19 }, (_, index) => room(index + 1)),
+    ];
+    getChatRoomsMock
+      .mockResolvedValueOnce(firstPage)
+      .mockResolvedValueOnce([room(21)])
+      .mockResolvedValueOnce(refreshedFirstPage);
+    render(<MemoryRouter><ChatListPage /></MemoryRouter>);
+    await screen.findByText('마지막 메시지 20');
+    await waitFor(() => expect(intersectionCallback).toBeTypeOf('function'));
+
+    act(() => intersectionCallback([{ isIntersecting: true }]));
+    await screen.findByText('마지막 메시지 21');
+    act(() => window.dispatchEvent(new Event('focus')));
+
+    expect(await screen.findByText('방금 도착한 메시지')).toBeInTheDocument();
+    expect(screen.getByText('마지막 메시지 20')).toBeInTheDocument();
+    expect(screen.getByText('마지막 메시지 21')).toBeInTheDocument();
+    expect(getChatRoomsMock.mock.calls[2][0]).toMatchObject({
+      createdAtCursor: undefined,
+      lastMessageIdCursor: undefined,
+    });
+  });
+
+  it('background refresh 실패 시 기존 목록을 유지하고 다시 시도한다', async () => {
+    const user = userEvent.setup();
+    getChatRoomsMock
+      .mockResolvedValueOnce([room(1)])
+      .mockRejectedValueOnce(new Error('동기화 실패'))
+      .mockResolvedValueOnce([room(1, { content: '갱신된 메시지' })]);
+    render(<MemoryRouter><ChatListPage /></MemoryRouter>);
+    await screen.findByText('마지막 메시지 1');
+
+    act(() => window.dispatchEvent(new Event('focus')));
+    expect(await screen.findByText('최신 대화를 불러오지 못했어요.')).toBeInTheDocument();
+    expect(screen.getByText('마지막 메시지 1')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: '다시 시도' }));
+    expect(await screen.findByText('갱신된 메시지')).toBeInTheDocument();
+    expect(screen.queryByText('최신 대화를 불러오지 못했어요.')).not.toBeInTheDocument();
   });
 });

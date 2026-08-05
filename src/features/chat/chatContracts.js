@@ -102,6 +102,22 @@ export function isReadEvent(value) {
   return Boolean(value && typeof value === 'object' && value.message === 'MESSAGE_READ');
 }
 
+export function validateReadEvent(value) {
+  const envelope = requireRecord(value, 'read event');
+  if (envelope.message !== 'MESSAGE_READ') {
+    throw new ApiContractError('알 수 없는 read event입니다.');
+  }
+  const data = requireRecord(envelope.data, 'read event data');
+  requireString(data, 'code', 'read event data');
+  requirePositiveId(data, 'roomId', 'read event data');
+  requirePositiveId(data, 'readerId', 'read event data');
+  requirePositiveId(data, 'lastReadMessageId', 'read event data');
+  if (data.code !== 'READ_UPDATED') {
+    throw new ApiContractError('알 수 없는 read event code입니다.');
+  }
+  return data;
+}
+
 export function validateChatError(value) {
   const error = requireRecord(value, 'chat error event');
   requireString(error, 'code', 'chat error event');

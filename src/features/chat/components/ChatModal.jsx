@@ -1,12 +1,12 @@
 import { useEffect, useId, useRef } from 'react';
-import { ChatHeader } from './ChatHeader.jsx';
-import { MessageComposer } from './MessageComposer.jsx';
-import { MessageList } from './MessageList.jsx';
+import { ChatConversation } from './ChatConversation.jsx';
+import { ChatModalHeader } from './ChatModalHeader.jsx';
 
 const FOCUSABLE_SELECTOR = 'button:not(:disabled), textarea:not(:disabled), [href], [tabindex]:not([tabindex="-1"])';
 
 export function ChatModal({ chat }) {
   const dialogRef = useRef(null);
+  const composerRef = useRef(null);
   const titleId = useId();
   const { closeChat, isOpen, status } = chat;
 
@@ -15,7 +15,9 @@ export function ChatModal({ chat }) {
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     const dialog = dialogRef.current;
-    const focusTarget = dialog?.querySelector('#chat-message-input:not(:disabled)') || dialog?.querySelector(FOCUSABLE_SELECTOR);
+    const focusTarget = !composerRef.current?.disabled
+      ? composerRef.current
+      : dialog?.querySelector(FOCUSABLE_SELECTOR);
     focusTarget?.focus();
 
     const handleKeyDown = (event) => {
@@ -46,13 +48,11 @@ export function ChatModal({ chat }) {
 
   useEffect(() => {
     if (status === 'connected') {
-      dialogRef.current?.querySelector('#chat-message-input')?.focus();
+      composerRef.current?.focus();
     }
   }, [status]);
 
   if (!isOpen) return null;
-  const disabled = status !== 'connected';
-
   return (
     <div className="chat-overlay" onClick={(event) => event.stopPropagation()}>
       <section
@@ -62,15 +62,16 @@ export function ChatModal({ chat }) {
         aria-modal="true"
         aria-labelledby={titleId}
       >
-        <ChatHeader target={chat.target} titleId={titleId} onClose={chat.closeChat} />
-        <MessageList
+        <ChatModalHeader participant={chat.target} titleId={titleId} onClose={chat.closeChat} />
+        <ChatConversation
+          composerRef={composerRef}
+          error={chat.error}
           messages={chat.messages}
           currentUserId={chat.currentUser?.userId}
-          target={chat.target}
+          participant={chat.target}
           status={chat.status}
+          onSend={chat.sendMessage}
         />
-        {chat.error && <p className="chat-error" role="alert">{chat.error}</p>}
-        <MessageComposer disabled={disabled} targetName={chat.target?.nickname} onSend={chat.sendMessage} />
       </section>
     </div>
   );

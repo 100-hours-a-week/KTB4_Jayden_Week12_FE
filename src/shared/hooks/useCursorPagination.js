@@ -5,21 +5,45 @@ function appendUniqueById(currentItems, nextItems, getItemId) {
   return [...currentItems, ...nextItems.filter((item) => !existingIds.has(String(getItemId(item))))];
 }
 
-export function useCursorPagination({ fetchPage, getCursor, getItemId, pageSize }) {
-  const [items, setItems] = useState([]);
+export function useCursorPagination({
+  fetchPage,
+  getCursor,
+  getItemId,
+  mergeRefreshedPage,
+  pageSize,
+}) {
+  const [items, setItemsState] = useState([]);
   const [status, setStatus] = useState('loading');
   const [error, setError] = useState(null);
   const [hasNext, setHasNext] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [loadMoreError, setLoadMoreError] = useState(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [refreshError, setRefreshError] = useState(null);
   const isRequestingRef = useRef(false);
+  const itemsRef = useRef([]);
   const cursorRef = useRef(null);
   const hasNextRef = useRef(true);
   const controllerRef = useRef(null);
   const requestIdRef = useRef(0);
 
-  const loadPage = useCallback(async ({ reset = false, throwOnError = false } = {}) => {
-    if (!reset && (isRequestingRef.current || !hasNextRef.current)) return;
+  const setItems = useCallback((nextItemsOrUpdater) => {
+    setItemsState((currentItems) => {
+      const nextItems = typeof nextItemsOrUpdater === 'function'
+        ? nextItemsOrUpdater(currentItems)
+        : nextItemsOrUpdater;
+      itemsRef.current = nextItems;
+      return nextItems;
+    });
+  }, []);
+
+  const loadPage = useCallback(async ({
+    refresh = false,
+    reset = false,
+    throwOnError = false,
+  } = {}) => {
+    if (refresh && isRequestingRef.current) return;
+    if (!reset && !refresh && (isRequestingRef.current || !hasNextRef.current)) return;
     if (reset) controllerRef.current?.abort();
 
     const requestId = requestIdRef.current + 1;
@@ -28,10 +52,14 @@ export function useCursorPagination({ fetchPage, getCursor, getItemId, pageSize 
     controllerRef.current = controller;
     isRequestingRef.current = true;
 
-    if (reset) {
+    if (refresh) {
+      setIsRefreshing(true);
+      setRefreshError(null);
+    } else if (reset) {
       setStatus('loading');
       setError(null);
       setLoadMoreError(null);
+      setRefreshError(null);
     } else {
       setIsLoadingMore(true);
       setLoadMoreError(null);
@@ -39,22 +67,34 @@ export function useCursorPagination({ fetchPage, getCursor, getItemId, pageSize 
 
     try {
       const nextItems = await fetchPage({
-        cursor: reset ? null : cursorRef.current,
+        cursor: reset || refresh ? null : cursorRef.current,
         signal: controller.signal,
       });
       if (requestIdRef.current !== requestId) return;
 
       const nextHasNext = nextItems.length === pageSize;
-      setItems((currentItems) => reset
-        ? nextItems
-        : appendUniqueById(currentItems, nextItems, getItemId));
-      if (reset) setStatus(nextItems.length === 0 ? 'empty' : 'success');
-      cursorRef.current = nextItems.length > 0 ? getCursor(nextItems.at(-1)) : null;
-      hasNextRef.current = nextHasNext;
-      setHasNext(nextHasNext);
+      const committedItems = refresh
+        ? mergeRefreshedPage?.(itemsRef.current, nextItems) ?? nextItems
+        : reset
+          ? nextItems
+          : appendUniqueById(itemsRef.current, nextItems, getItemId);
+      itemsRef.current = committedItems;
+      setItemsState(committedItems);
+      if (reset || refresh) {
+        setError(null);
+        setStatus(committedItems.length === 0 ? 'empty' : 'success');
+      }
+      cursorRef.current = committedItems.length > 0 ? getCursor(committedItems.at(-1)) : null;
+      const committedHasNext = refresh && committedItems.length > nextItems.length
+        ? hasNextRef.current
+        : nextHasNext;
+      hasNextRef.current = committedHasNext;
+      setHasNext(committedHasNext);
     } catch (requestError) {
       if (requestError?.name === 'AbortError' || requestIdRef.current !== requestId) return;
-      if (reset) {
+      if (refresh) {
+        setRefreshError(requestError);
+      } else if (reset) {
         setError(requestError);
         setStatus('error');
       } else {
@@ -65,9 +105,10 @@ export function useCursorPagination({ fetchPage, getCursor, getItemId, pageSize 
       if (requestIdRef.current === requestId) {
         isRequestingRef.current = false;
         setIsLoadingMore(false);
+        setIsRefreshing(false);
       }
     }
-  }, [fetchPage, getCursor, getItemId, pageSize]);
+  }, [fetchPage, getCursor, getItemId, mergeRefreshedPage, pageSize]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => void loadPage({ reset: true }), 0);
@@ -83,10 +124,11 @@ export function useCursorPagination({ fetchPage, getCursor, getItemId, pageSize 
     [loadPage],
   );
   const loadMore = useCallback(() => loadPage(), [loadPage]);
+  const refresh = useCallback(() => loadPage({ refresh: true }), [loadPage]);
   const appendItem = useCallback((item) => {
     setItems((currentItems) => appendUniqueById(currentItems, [item], getItemId));
     setStatus('success');
-  }, [getItemId]);
+  }, [getItemId, setItems]);
 
   return {
     items,
@@ -96,7 +138,10 @@ export function useCursorPagination({ fetchPage, getCursor, getItemId, pageSize 
     hasNext,
     isLoadingMore,
     loadMoreError,
+    isRefreshing,
+    refreshError,
     reset,
+    refresh,
     loadMore,
     appendItem,
     retryLoadMore: loadMore,

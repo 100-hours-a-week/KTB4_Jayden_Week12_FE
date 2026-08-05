@@ -1,8 +1,9 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { MessageComposer } from '../features/chat/components/MessageComposer.jsx';
-import { MessageList } from '../features/chat/components/MessageList.jsx';
-import { useChat } from '../features/chat/ChatContext.jsx';
+import { ChatConversation } from '../features/chat/components/ChatConversation.jsx';
+import { useChatSessionContext } from '../features/chat/ChatSessionContext.jsx';
+import { useChatUnread } from '../features/chat/ChatUnreadContext.jsx';
+import { useChatReadReceipt } from '../features/chat/useChatReadReceipt.js';
 import { Avatar } from '../shared/components/Avatar.jsx';
 
 function parseRoomId(value) {
@@ -14,17 +15,29 @@ function parseRoomId(value) {
 export function ChatRoomPage() {
   const params = useParams();
   const roomId = parseRoomId(params.roomId);
-  const chat = useChat();
-  const lastReadRef = useRef(0);
+  const chat = useChatSessionContext();
+  const { refreshUnread } = useChatUnread();
   const {
     closeChat,
     currentUser,
-    markAsRead,
     messages,
     openRoom,
-    refreshUnread,
+    readError,
+    readReceipt,
+    requestRead,
     status,
   } = chat;
+
+  useChatReadReceipt({
+    currentUserId: currentUser?.userId,
+    messages,
+    readError,
+    readReceipt,
+    refreshUnread,
+    requestRead,
+    roomId: roomId ? chat.room?.chatRoomId ?? roomId : null,
+    status,
+  });
 
   useEffect(() => {
     if (!roomId) return undefined;
@@ -34,22 +47,6 @@ export function ChatRoomPage() {
       closeChat();
     };
   }, [closeChat, openRoom, roomId]);
-
-  useEffect(() => {
-    if (status !== 'connected' || document.visibilityState !== 'visible') return undefined;
-    const latestOpponentMessage = [...messages].reverse().find((message) => (
-      message.messageId && String(message.senderId) !== String(currentUser?.userId)
-    ));
-    if (!latestOpponentMessage || latestOpponentMessage.messageId <= lastReadRef.current) return undefined;
-
-    const timer = window.setTimeout(() => {
-      if (markAsRead(latestOpponentMessage.messageId)) {
-        lastReadRef.current = latestOpponentMessage.messageId;
-        window.setTimeout(() => void refreshUnread(), 600);
-      }
-    }, 300);
-    return () => window.clearTimeout(timer);
-  }, [currentUser?.userId, markAsRead, messages, refreshUnread, status]);
 
   if (!roomId) {
     return (
@@ -69,19 +66,18 @@ export function ChatRoomPage() {
             <h1 id="chat-room-title">{chat.target?.nickname || '메시지'}</h1>
           </div>
         </header>
-        <MessageList
+        <ChatConversation
+          error={chat.error}
+          errorAction={chat.status === 'connection-error'
+            ? <Link to="/chats">메시지 목록으로 돌아가기</Link>
+            : null}
+          feedbackVariant="room"
           messages={chat.messages}
           currentUserId={chat.currentUser?.userId}
-          target={chat.target}
+          participant={chat.target}
           status={chat.status}
+          onSend={chat.sendMessage}
         />
-        {chat.error && (
-          <div className="chat-room-error" role="alert">
-            <p>{chat.error}</p>
-            {chat.status === 'connection-error' && <Link to="/chats">메시지 목록으로 돌아가기</Link>}
-          </div>
-        )}
-        <MessageComposer disabled={chat.status !== 'connected'} targetName={chat.target?.nickname} onSend={chat.sendMessage} />
       </section>
     </main>
   );

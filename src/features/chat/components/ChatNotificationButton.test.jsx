@@ -4,8 +4,8 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 
 const { unreadState } = vi.hoisted(() => ({ unreadState: { count: 0 } }));
-vi.mock('../ChatContext.jsx', () => ({
-  useChat: () => ({ totalUnreadCount: unreadState.count }),
+vi.mock('../ChatUnreadContext.jsx', () => ({
+  useChatUnread: () => ({ totalUnreadCount: unreadState.count }),
 }));
 
 import { ChatNotificationButton } from './ChatNotificationButton.jsx';

@@ -1,8 +1,8 @@
 import { Link, useLocation } from 'react-router-dom';
-import { useChat } from '../ChatContext.jsx';
+import { useChatUnread } from '../ChatUnreadContext.jsx';
 
 export function ChatNotificationButton() {
-  const { totalUnreadCount } = useChat();
+  const { totalUnreadCount } = useChatUnread();
   const location = useLocation();
   const isActive = /^\/chats(?:\/|$)/.test(location.pathname);
   const label = totalUnreadCount > 0

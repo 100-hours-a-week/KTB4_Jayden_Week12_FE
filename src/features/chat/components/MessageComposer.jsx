@@ -1,7 +1,12 @@
-import { useState } from 'react';
+import { forwardRef, useId, useState } from 'react';
 
-export function MessageComposer({ disabled, targetName, onSend }) {
+export const MessageComposer = forwardRef(function MessageComposer({
+  disabled,
+  targetName,
+  onSend,
+}, ref) {
   const [content, setContent] = useState('');
+  const inputId = useId();
   const trimmed = content.trim();
 
   const submit = (event) => {
@@ -11,9 +16,10 @@ export function MessageComposer({ disabled, targetName, onSend }) {
 
   return (
     <form className="chat-composer" onSubmit={submit}>
-      <label className="sr-only" htmlFor="chat-message-input">메시지</label>
+      <label className="sr-only" htmlFor={inputId}>메시지</label>
       <textarea
-        id="chat-message-input"
+        ref={ref}
+        id={inputId}
         rows="1"
         maxLength="1000"
         value={content}
@@ -32,4 +38,4 @@ export function MessageComposer({ disabled, targetName, onSend }) {
       </button>
     </form>
   );
-}
+});

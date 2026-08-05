@@ -24,7 +24,9 @@ vi.mock('../features/comments/components/CommentSection.jsx', () => ({
   CommentSection: ({ articleId }) => `댓글 영역 ${articleId}`,
 }));
 vi.mock('../features/auth/AuthContext.jsx', () => ({ useAuth: () => authState }));
-vi.mock('../features/chat/ChatContext.jsx', () => ({ useOptionalChat: () => ({ openChat: openChatMock }) }));
+vi.mock('../features/chat/ChatSessionContext.jsx', () => ({
+  useOptionalChatSession: () => ({ openChat: openChatMock }),
+}));
 
 import { PostDetailPage } from './PostDetailPage.jsx';
 
