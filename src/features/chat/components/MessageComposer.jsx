@@ -1,4 +1,4 @@
-import { forwardRef, useId, useState } from 'react';
+import { forwardRef, useId, useRef, useState } from 'react';
 
 export const MessageComposer = forwardRef(function MessageComposer({
   disabled,
@@ -6,6 +6,7 @@ export const MessageComposer = forwardRef(function MessageComposer({
   onSend,
 }, ref) {
   const [content, setContent] = useState('');
+  const isComposingRef = useRef(false);
   const inputId = useId();
   const trimmed = content.trim();
 
@@ -26,8 +27,10 @@ export const MessageComposer = forwardRef(function MessageComposer({
         disabled={disabled}
         placeholder={`${targetName || '상대방'}님에게 메시지 보내기`}
         onChange={(event) => setContent(event.target.value)}
+        onCompositionStart={() => { isComposingRef.current = true; }}
+        onCompositionEnd={() => { isComposingRef.current = false; }}
         onKeyDown={(event) => {
-          if (event.key === 'Enter' && !event.shiftKey) {
+          if (event.key === 'Enter' && !event.shiftKey && !isComposingRef.current) {
             event.preventDefault();
             event.currentTarget.form?.requestSubmit();
           }
