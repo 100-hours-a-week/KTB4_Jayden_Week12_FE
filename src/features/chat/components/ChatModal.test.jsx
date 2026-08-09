@@ -1,6 +1,19 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+
+const mocks = vi.hoisted(() => ({
+  refreshUnread: vi.fn(() => Promise.resolve(0)),
+  useChatReadReceipt: vi.fn(),
+}));
+
+vi.mock('../ChatUnreadContext.jsx', () => ({
+  useChatUnread: () => ({ refreshUnread: mocks.refreshUnread }),
+}));
+vi.mock('../useChatReadReceipt.js', () => ({
+  useChatReadReceipt: mocks.useChatReadReceipt,
+}));
+
 import { ChatModal } from './ChatModal.jsx';
 
 function createChat(overrides = {}) {
@@ -9,15 +22,39 @@ function createChat(overrides = {}) {
     status: 'connected',
     target: { userId: 31, nickname: '하비', profileImageUrl: null },
     currentUser: { userId: 1 },
+    room: { chatRoomId: 20 },
     messages: [],
     error: '',
+    readError: null,
+    readReceipt: null,
     closeChat: vi.fn(),
+    requestRead: vi.fn(() => true),
     sendMessage: vi.fn(() => true),
     ...overrides,
   };
 }
 
+beforeEach(() => {
+  vi.clearAllMocks();
+});
+
 describe('ChatModal', () => {
+  it('모달에서 렌더링한 상대 메시지를 읽음 처리하도록 session을 연결한다', () => {
+    const chat = createChat();
+    render(<ChatModal chat={chat} />);
+
+    expect(mocks.useChatReadReceipt).toHaveBeenCalledWith({
+      currentUserId: 1,
+      messages: chat.messages,
+      readError: null,
+      readReceipt: null,
+      refreshUnread: mocks.refreshUnread,
+      requestRead: chat.requestRead,
+      roomId: 20,
+      status: 'connected',
+    });
+  });
+
   it('대화 상대와 메시지 composer를 접근 가능한 dialog로 표시한다', () => {
     render(<ChatModal chat={createChat()} />);
 
