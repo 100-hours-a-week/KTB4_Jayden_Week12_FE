@@ -12,6 +12,7 @@ import {
 } from './chatContracts.js';
 import { getChatHistory, getChatRoomInfo, resolveDirectRoom } from './chatService.js';
 import { createChatSocket } from './chatSocket.js';
+import { createClientMessageId } from './clientMessageId.js';
 import {
   createOptimisticTextMessage,
   normalizeHistoryMessage,
@@ -236,7 +237,7 @@ export function useChatSession() {
       return false;
     }
 
-    const clientMessageId = crypto.randomUUID();
+    const clientMessageId = createClientMessageId();
     const optimisticMessage = createOptimisticTextMessage({
       clientMessageId,
       senderId: user.userId,
