@@ -4,6 +4,8 @@
 
 HobbyLoop Frontend는 취미를 게시하고 다른 사용자와 소통할 수 있는 웹 클라이언트입니다. React와 Vite로 구현한 프론트엔드가 있으며, 화면 렌더링부터 인증 상태, HTTP API 연동, STOMP 기반 1:1 채팅까지 포함됩니다.
 
+![HobbyLoop_app.gif](HobbyLoop_app.gif)
+
 ## 주요 기능
 
 - 회원가입, 로그인, 로그아웃과 JWT access token 갱신
