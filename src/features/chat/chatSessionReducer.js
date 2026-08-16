@@ -17,6 +17,7 @@ export const INITIAL_CHAT_SESSION_STATE = Object.freeze({
   messages: [],
   error: '',
   readReceipt: null,
+  opponentLastReadMessageId: 0,
   readError: null,
 });
 
@@ -69,7 +70,14 @@ export function chatSessionReducer(state, action) {
         messages: mergeChatMessages(state.messages, [action.message]),
       };
     case CHAT_SESSION_ACTION.READ_RECEIVED:
-      return { ...state, readReceipt: action.receipt, readError: null };
+      return {
+        ...state,
+        readReceipt: action.receipt,
+        opponentLastReadMessageId: action.isOpponent
+          ? Math.max(state.opponentLastReadMessageId, action.receipt.lastReadMessageId)
+          : state.opponentLastReadMessageId,
+        readError: null,
+      };
     case CHAT_SESSION_ACTION.READ_FAILED:
       return { ...state, readError: action.error };
     case CHAT_SESSION_ACTION.MESSAGE_SEND_STARTED:

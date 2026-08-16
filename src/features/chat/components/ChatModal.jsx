@@ -1,4 +1,6 @@
 import { useEffect, useId, useRef } from 'react';
+import { useChatUnread } from "../ChatUnreadContext.jsx";
+import { useChatReadReceipt } from "../useChatReadReceipt.js";
 import { ChatConversation } from './ChatConversation.jsx';
 import { ChatModalHeader } from './ChatModalHeader.jsx';
 
@@ -8,7 +10,19 @@ export function ChatModal({ chat }) {
   const dialogRef = useRef(null);
   const composerRef = useRef(null);
   const titleId = useId();
+  const { refreshUnread } = useChatUnread();
   const { closeChat, isOpen, status } = chat;
+
+  useChatReadReceipt({
+    currentUserId: chat.currentUser?.userId,
+    messages: chat.messages,
+    readError: chat.readError,
+    readReceipt: chat.readReceipt,
+    refreshUnread,
+    requestRead: chat.requestRead,
+    roomId: chat.room?.chatRoomId ?? null,
+    status: chat.status,
+  });
 
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -71,6 +85,7 @@ export function ChatModal({ chat }) {
           participant={chat.target}
           status={chat.status}
           onSend={chat.sendMessage}
+          opponentLastReadMessageId={chat.opponentLastReadMessageId}
         />
       </section>
     </div>

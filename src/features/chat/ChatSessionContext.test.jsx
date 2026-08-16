@@ -5,6 +5,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({ useChatSession: vi.fn() }));
 vi.mock('./useChatSession.js', () => ({ useChatSession: mocks.useChatSession }));
+vi.mock('./ChatUnreadContext.jsx', () => ({
+  useChatUnread: () => ({refreshUnread: vi.fn(() => Promise.resolve(0)),}),
+}));
 
 import { ChatSessionProvider, useChatSessionContext } from './ChatSessionContext.jsx';
 

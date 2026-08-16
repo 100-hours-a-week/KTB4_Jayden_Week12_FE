@@ -1,12 +1,12 @@
 import { useEffect, useRef } from 'react';
 import { MessageBubble } from './MessageBubble.jsx';
 
-export function MessageList({ messages, currentUserId, target, status }) {
+export function MessageList({ messages, currentUserId, opponentLastReadMessageId, target, status }) {
   const endRef = useRef(null);
 
   useEffect(() => {
     endRef.current?.scrollIntoView?.({ block: 'end' });
-  }, [messages]);
+  }, [messages, opponentLastReadMessageId]);
 
   return (
     <div className="chat-messages" aria-live="polite">
@@ -16,14 +16,18 @@ export function MessageList({ messages, currentUserId, target, status }) {
         <p className="chat-empty">{target?.nickname}님과의 대화를 시작해 보세요.</p>
       )}
       <ol className="chat-message-list">
-        {messages.map((message) => (
-          <MessageBubble
-            key={message.clientMessageId || message.messageId}
-            message={message}
-            isMine={String(message.senderId) === String(currentUserId)}
-            target={target}
-          />
-        ))}
+        {messages.map((message) => {
+          const isMine = String(message.senderId) === String(currentUserId);
+          return (
+            <MessageBubble
+              key={message.clientMessageId || message.messageId}
+              message={message}
+              isMine={isMine}
+              isRead={isMine && message.messageId <= opponentLastReadMessageId}
+              target={target}
+            />
+          );
+        })}
       </ol>
       <div ref={endRef} />
     </div>

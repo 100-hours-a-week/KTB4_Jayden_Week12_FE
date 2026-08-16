@@ -127,6 +127,13 @@ describe('useChatSession', () => {
       '/user/queue/chat-errors',
       '/sub/chatrooms/20',
     ]);
+    expect(socket.reauthenticate).toHaveBeenCalledWith('access-token-1');
+    expect(result.current.status).toBe('reauthenticating');
+
+    act(() => socketCallbacks.get('/user/queue/auth')({
+      type: 'REAUTHENTICATED',
+      expiresAt: new Date(Date.now() + 60_000).toISOString(),
+    }));
     expect(result.current).toMatchObject({
       isOpen: true,
       status: 'connected',
@@ -187,20 +194,96 @@ describe('useChatSession', () => {
       await result.current.openRoom(20);
     });
 
-    act(() => tokenSubscriber('access-token-2'));
-    expect(socket.reauthenticate).toHaveBeenCalledWith('access-token-2');
+    expect(socket.reauthenticate).toHaveBeenNthCalledWith(1, 'access-token-1');
     expect(result.current.status).toBe('reauthenticating');
 
     act(() => socketCallbacks.get('/user/queue/auth')({
       type: 'REAUTHENTICATED',
-      expiresAt: '2026-08-05T11:00:00Z',
+      expiresAt: new Date(Date.now() + 60_000).toISOString(),
+    }));
+    expect(result.current.status).toBe('connected');
+
+    act(() => tokenSubscriber('access-token-2'));
+    expect(socket.reauthenticate).toHaveBeenNthCalledWith(2, 'access-token-2');
+    expect(result.current.status).toBe('reauthenticating');
+
+    act(() => socketCallbacks.get('/user/queue/auth')({
+      type: 'REAUTHENTICATED',
+      expiresAt: new Date(Date.now() + 120_000).toISOString(),
     }));
     expect(result.current.status).toBe('connected');
 
     unmount();
   });
 
-  it('read event를 검증해 session receipt로 제공하고 read 발행을 adapter에 위임한다', async () => {
+  it('auth event의 만료 시각 15초 전에 access token을 갱신한다', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime('2026-08-05T10:00:00Z');
+    const { result, unmount } = renderHook(() => useChatSession());
+    await act(async () => {
+      await result.current.openRoom(20);
+    });
+
+    act(() => socketCallbacks.get('/user/queue/auth')({
+      type: 'REAUTHENTICATED',
+      expiresAt: '2026-08-05T11:00:00Z',
+    }));
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3_584_999);
+    });
+    expect(mocks.refreshAccessToken).not.toHaveBeenCalled();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1);
+    });
+    expect(mocks.refreshAccessToken).toHaveBeenCalledTimes(1);
+
+    unmount();
+  });
+
+  it('예약된 access token 갱신이 실패하면 익명 상태로 전환한다', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime('2026-08-05T10:00:00Z');
+    mocks.refreshAccessToken.mockRejectedValueOnce(new Error('refresh failed'));
+    const { result, unmount } = renderHook(() => useChatSession());
+    await act(async () => {
+      await result.current.openRoom(20);
+    });
+
+    act(() => socketCallbacks.get('/user/queue/auth')({
+      type: 'REAUTHENTICATED',
+      expiresAt: '2026-08-05T10:00:15Z',
+    }));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
+
+    expect(mocks.authState.markAnonymous).toHaveBeenCalledTimes(1);
+    unmount();
+  });
+
+  it('close 시 예약된 access token 갱신을 취소한다', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime('2026-08-05T10:00:00Z');
+    const { result } = renderHook(() => useChatSession());
+    await act(async () => {
+      await result.current.openRoom(20);
+    });
+    act(() => socketCallbacks.get('/user/queue/auth')({
+      type: 'REAUTHENTICATED',
+      expiresAt: '2026-08-05T10:01:00Z',
+    }));
+
+    act(() => result.current.closeChat());
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(45_000);
+    });
+
+    expect(mocks.refreshAccessToken).not.toHaveBeenCalled();
+  });
+
+  it('read event를 검증해 내 receipt와 상대의 마지막 읽음 위치를 제공한다', async () => {
     const { result, unmount } = renderHook(() => useChatSession());
     await act(async () => {
       await result.current.openRoom(20);
@@ -221,6 +304,12 @@ describe('useChatSession', () => {
       readerId: 1,
       lastReadMessageId: 10,
     });
+
+    act(() => socketCallbacks.get('/sub/chatrooms/20')({
+      message: 'MESSAGE_READ',
+      data: { code: 'READ_UPDATED', roomId: 20, readerId: 2, lastReadMessageId: 8 },
+    }));
+    expect(result.current.opponentLastReadMessageId).toBe(8);
     expect(result.current.messages).toHaveLength(1);
     unmount();
   });

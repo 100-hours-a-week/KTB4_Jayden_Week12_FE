@@ -10,6 +10,7 @@ export function ChatConversation({
   feedbackVariant = 'modal',
   messages,
   onSend,
+  opponentLastReadMessageId = 0,
   participant,
   status,
 }) {
@@ -18,6 +19,7 @@ export function ChatConversation({
       <MessageList
         messages={messages}
         currentUserId={currentUserId}
+        opponentLastReadMessageId={opponentLastReadMessageId}
         target={participant}
         status={status}
       />

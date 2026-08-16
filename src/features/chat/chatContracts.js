@@ -119,13 +119,19 @@ export function validateReadEvent(value) {
 }
 
 export function validateChatError(value) {
-  const error = requireRecord(value, 'chat error event');
-  requireString(error, 'code', 'chat error event');
-  requireString(error, 'message', 'chat error event');
-  if (error.roomId !== null && error.roomId !== undefined) {
-    requirePositiveId(error, 'roomId', 'chat error event');
+  const response = requireRecord(value, 'chat error response');
+  const message = requireString(response, 'message', 'chat error response');
+  const data = requireRecord(response.data, 'chat error data');
+
+  let roomId = null;
+  if (data.roomId !== null && data.roomId !== undefined) {
+    roomId = requirePositiveId(data, 'roomId', 'chat error data');
   }
-  return error;
+  return {
+    code: message,
+    message,
+    roomId,
+  };
 }
 
 export function validateAuthEvent(value) {
