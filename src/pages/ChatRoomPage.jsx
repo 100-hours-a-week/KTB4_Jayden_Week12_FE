@@ -77,6 +77,7 @@ export function ChatRoomPage() {
           participant={chat.target}
           status={chat.status}
           onSend={chat.sendMessage}
+          opponentLastReadMessageId={chat.opponentLastReadMessageId}
         />
       </section>
     </main>

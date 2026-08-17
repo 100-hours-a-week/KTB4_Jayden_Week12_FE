@@ -69,7 +69,17 @@ describe('chatService', () => {
       '/chatrooms?pageSize=20&createdAtCursor=2026-08-04T14%3A30%3A00&lastMessageIdCursor=501',
       { signal: undefined },
     );
-    await expect(getChatRooms({ createdAtCursor: '2026-08-04T14:30:00' })).rejects.toThrow('함께 전달');
+    await expect(getChatRooms({ createdAtCursor: '2026-08-04T14:30:00' }))
+        .rejects.toThrow('함께 전달');
+
+    await expect(
+        getChatRooms({ createdAtCursor: '2026-08-04T14:30:00', }), )
+        .rejects.toThrow('함께 전달')
+
+    await expect(getChatRooms({lastMessageIdCursor: 501,}),)
+        .rejects.toThrow('함께 전달');
+
+    expect(requestMock).toHaveBeenCalledTimes(1);
   });
 
   it('전체 unread count를 배열 합계가 아닌 전용 endpoint에서 읽는다', async () => {

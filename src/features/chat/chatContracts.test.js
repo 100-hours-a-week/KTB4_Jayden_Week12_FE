@@ -46,11 +46,15 @@ describe('chatContracts', () => {
     })).toThrow(ApiContractError);
   });
 
-  it('chat error의 roomId는 없거나 양의 정수여야 한다', () => {
-    expect(validateChatError({ code: 'ROOM_NOT_FOUND', message: '없음', roomId: 20 }))
-      .toEqual({ code: 'ROOM_NOT_FOUND', message: '없음', roomId: 20 });
-    expect(() => validateChatError({ code: 'ROOM_NOT_FOUND', message: '없음', roomId: -1 }))
-      .toThrow(ApiContractError);
+  it('chat error의 roomId는 null이거나 양의 정수여야 한다', () => {
+    expect(validateChatError({message: 'ROOM_NOT_FOUND', data: { roomId: 20 }, }))
+        .toEqual({code: 'ROOM_NOT_FOUND', message: 'ROOM_NOT_FOUND', roomId: 20, });
+
+    expect(validateChatError({message: 'ACCESS_TOKEN_EXPIRED', data: { roomId: null }, }))
+        .toEqual({code: 'ACCESS_TOKEN_EXPIRED', message: 'ACCESS_TOKEN_EXPIRED', roomId: null, });
+
+    expect(() => validateChatError({message: 'ROOM_NOT_FOUND', data: { roomId: -1 }, }))
+        .toThrow(ApiContractError);
   });
 
   it('재인증 성공 event만 auth event로 허용한다', () => {

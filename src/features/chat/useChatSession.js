@@ -31,6 +31,7 @@ import {
 
 const MESSAGE_ACK_TIMEOUT_MS = 15000;
 const REAUTH_TIMEOUT_MS = 10000;
+const TOKEN_REFRESH_LEEWAY_MS = 15000;
 
 function getLoginUrl() {
   const returnTo = `${window.location.pathname}${window.location.search}${window.location.hash}`;
@@ -48,12 +49,16 @@ export function useChatSession() {
   const roomRef = useRef(null);
   const currentTokenRef = useRef(null);
   const reauthTimeoutRef = useRef(null);
+  const tokenRefreshTimerRef = useRef(null);
 
   const clearPendingTimers = useCallback(() => {
     pendingTimersRef.current.forEach((timer) => window.clearTimeout(timer));
     pendingTimersRef.current.clear();
     if (reauthTimeoutRef.current) window.clearTimeout(reauthTimeoutRef.current);
     reauthTimeoutRef.current = null;
+
+    if (tokenRefreshTimerRef.current) window.clearTimeout(tokenRefreshTimerRef.current);
+    tokenRefreshTimerRef.current = null;
   }, []);
 
   const cleanupResources = useCallback(async () => {
@@ -97,9 +102,13 @@ export function useChatSession() {
 
   const handleLiveMessage = useCallback((payload) => {
     if (isReadEvent(payload)) {
+      const receipt = validateReadEvent(payload);
       dispatch({
         type: CHAT_SESSION_ACTION.READ_RECEIVED,
-        receipt: validateReadEvent(payload),
+        receipt,
+        isOpponent: user?.userId !== null
+          && user?.userId !== undefined
+          && String(receipt.readerId) !== String(user.userId),
       });
       return;
     }
@@ -108,14 +117,70 @@ export function useChatSession() {
     if (timer) window.clearTimeout(timer);
     pendingTimersRef.current.delete(message.clientMessageId);
     dispatch({ type: CHAT_SESSION_ACTION.LIVE_MESSAGE_RECEIVED, message });
-  }, []);
+  }, [user]);
+
+  const scheduleAccessTokenRefresh = useCallback((expiresAt) => {
+    if (tokenRefreshTimerRef.current) {
+      window.clearTimeout(tokenRefreshTimerRef.current);
+    }
+    tokenRefreshTimerRef.current = null;
+
+    const expiresAtMs = Date.parse(expiresAt);
+
+    if (!Number.isFinite(expiresAtMs)) {
+      handleProtocolError();
+      return;
+    }
+
+    const delay = Math.max(
+        expiresAtMs - Date.now() - TOKEN_REFRESH_LEEWAY_MS,
+        0,
+    );
+
+    tokenRefreshTimerRef.current = window.setTimeout(() => {
+      tokenRefreshTimerRef.current = null;
+
+      void refreshAccessToken().catch(() => {
+        markAnonymous();
+      });
+    }, delay);
+  }, [handleProtocolError, markAnonymous]);
 
   const handleAuthEvent = useCallback((payload) => {
-    validateAuthEvent(payload);
-    if (reauthTimeoutRef.current) window.clearTimeout(reauthTimeoutRef.current);
+    const authEvent = validateAuthEvent(payload);
+    if (reauthTimeoutRef.current) {
+      window.clearTimeout(reauthTimeoutRef.current);
+    }
     reauthTimeoutRef.current = null;
+
+    scheduleAccessTokenRefresh(authEvent.expiresAt);
     dispatch({ type: CHAT_SESSION_ACTION.REAUTH_SUCCEEDED });
-  }, []);
+  }, [scheduleAccessTokenRefresh]);
+
+  const beginReauthentication = useCallback((token) => {
+    const socket = socketRef.current;
+    if (!token || !socket?.isConnected()) {
+      return false;
+    }
+    currentTokenRef.current = token;
+    dispatch({ type: CHAT_SESSION_ACTION.REAUTH_STARTED });
+
+    try {
+      socket.reauthenticate(token);
+    } catch {
+      handleConnectionLost();
+      return false;
+    }
+
+    if (reauthTimeoutRef.current) {
+      window.clearTimeout(reauthTimeoutRef.current);
+    }
+    reauthTimeoutRef.current = window.setTimeout(
+        handleConnectionLost,
+        REAUTH_TIMEOUT_MS,
+    );
+    return true;
+  }, [handleConnectionLost]);
 
   const handleChatError = useCallback(async (payload) => {
     const chatError = validateChatError(payload);
@@ -126,28 +191,32 @@ export function useChatSession() {
       dispatch({ type: CHAT_SESSION_ACTION.ERROR_REPORTED, error: chatError.message });
       return;
     }
-    if (kind === CHAT_ERROR_KIND.ROOM) {
-      dispatch({ type: CHAT_SESSION_ACTION.SESSION_DISCONNECTED, error: chatError.message });
-      return;
-    }
-    if (kind === CHAT_ERROR_KIND.CONNECTION) {
-      handleConnectionLost();
-      return;
-    }
     if (kind === CHAT_ERROR_KIND.READ) {
       dispatch({ type: CHAT_SESSION_ACTION.READ_FAILED, error: chatError });
       return;
     }
     if (kind === CHAT_ERROR_KIND.AUTH) {
+      dispatch({type: CHAT_SESSION_ACTION.REAUTH_STARTED, })
       try {
         await refreshAccessToken();
       } catch {
         markAnonymous();
       }
-    }
-  }, [handleConnectionLost, markAnonymous]);
+      return;
 
-  const openConversation = useCallback(async ({ target, resolveRoom }) => {
+      if (kind === CHAT_ERROR_KIND.ROOM || kind === CHAT_ERROR_KIND.CONNECTION) {
+        dispatch({ type: CHAT_SESSION_ACTION.SESSION_DISCONNECTED, error: chatError.message });
+        return;
+      }
+
+      dispatch({
+        type: CHAT_SESSION_ACTION.ERROR_REPORTED,
+        error: chatError.message || '채팅 요청을 처리하지 못했습니다.',
+      });
+    }
+  }, [markAnonymous]);
+
+  const openConversation = useCallback(async ({target, resolveRoom}) => {
     const accessToken = getAccessToken();
     if (!accessToken) {
       window.location.assign(getLoginUrl());
@@ -158,13 +227,13 @@ export function useChatSession() {
     const sessionId = sessionIdRef.current;
     const controller = new AbortController();
     abortRef.current = controller;
-    dispatch({ type: CHAT_SESSION_ACTION.OPEN_REQUESTED, target });
+    dispatch({type: CHAT_SESSION_ACTION.OPEN_REQUESTED, target});
 
     try {
       const room = await resolveRoom(controller.signal);
       if (sessionId !== sessionIdRef.current) return;
       roomRef.current = room;
-      dispatch({ type: CHAT_SESSION_ACTION.ROOM_RESOLVED, room });
+      dispatch({type: CHAT_SESSION_ACTION.ROOM_RESOLVED, room});
 
       const latestToken = getAccessToken();
       if (!latestToken) throw new Error('access token이 없습니다.');
@@ -183,9 +252,16 @@ export function useChatSession() {
         socket.subscribe('/user/queue/chat-errors', handleChatError),
         socket.subscribe(`/sub/chatrooms/${room.chatRoomId}`, handleLiveMessage),
       ];
-      dispatch({ type: CHAT_SESSION_ACTION.SOCKET_CONNECTED });
+      dispatch({type: CHAT_SESSION_ACTION.SOCKET_CONNECTED});
 
-      const history = await getChatHistory(room.chatRoomId, { signal: controller.signal });
+      if (!beginReauthentication(latestToken)) {
+        throw new Error('채팅 세션 만료 시각을 확인하지 못했습니다.');
+      }
+
+      const history = await getChatHistory(
+          room.chatRoomId,
+          {signal: controller.signal},
+      );
       if (sessionId !== sessionIdRef.current) return;
       dispatch({
         type: CHAT_SESSION_ACTION.HISTORY_RECEIVED,
@@ -195,10 +271,11 @@ export function useChatSession() {
       if (error.name === 'AbortError' || sessionId !== sessionIdRef.current) return;
       dispatch({
         type: CHAT_SESSION_ACTION.SESSION_DISCONNECTED,
-        error: getConversationOpenError(error, { roomResolved: Boolean(roomRef.current) }),
+        error: getConversationOpenError(error, {roomResolved: Boolean(roomRef.current)}),
       });
     }
   }, [
+    beginReauthentication,
     cleanupResources,
     handleAuthEvent,
     handleChatError,
@@ -276,14 +353,11 @@ export function useChatSession() {
   }, []);
 
   useEffect(() => subscribeAccessToken((token) => {
-    const socket = socketRef.current;
-    if (!token || !socket?.isConnected() || token === currentTokenRef.current) return;
-    currentTokenRef.current = token;
-    dispatch({ type: CHAT_SESSION_ACTION.REAUTH_STARTED });
-    socket.reauthenticate(token);
-    if (reauthTimeoutRef.current) window.clearTimeout(reauthTimeoutRef.current);
-    reauthTimeoutRef.current = window.setTimeout(handleConnectionLost, REAUTH_TIMEOUT_MS);
-  }), [handleConnectionLost]);
+    if (!token || token === currentTokenRef.current) {
+      return;
+    }
+    beginReauthentication(token);
+  }), [beginReauthentication]);
 
   useEffect(() => {
     if (authStatus !== AUTH_STATUS.ANONYMOUS || !state.isOpen) return undefined;

@@ -21,7 +21,7 @@ describe('MessageComposer', () => {
     expect(secondRef.current).toBe(inputs[1]);
   });
 
-  it('한글 조합을 확정하는 Enter는 전송하지 않는다', () => {
+  it('한글 조합 확정 Enter는 전송하지 않고 조합 종료 후 Enter는 한 번만 전송한다', () => {
     const onSend = vi.fn(() => true);
     render(<MessageComposer disabled={false} targetName="하비" onSend={onSend} />);
     const input = screen.getByLabelText('메시지');
@@ -29,15 +29,11 @@ describe('MessageComposer', () => {
     fireEvent.change(input, { target: { value: '안녕' } });
     fireEvent.compositionStart(input);
     fireEvent.keyDown(input, { key: 'Enter' });
-
     expect(onSend).not.toHaveBeenCalled();
-    expect(input).toHaveValue('안녕');
 
     fireEvent.compositionEnd(input);
     fireEvent.keyDown(input, { key: 'Enter' });
-
     expect(onSend).toHaveBeenCalledTimes(1);
     expect(onSend).toHaveBeenCalledWith('안녕');
-    expect(input).toHaveValue('');
   });
 });

@@ -67,11 +67,28 @@ describe('chatSessionReducer', () => {
     const read = chatSessionReducer(connected, {
       type: CHAT_SESSION_ACTION.READ_RECEIVED,
       receipt,
+      isOpponent: false,
     });
-    expect(read).toMatchObject({ status: CHAT_SESSION_STATUS.CONNECTED, readReceipt: receipt });
+    expect(read).toMatchObject({
+      status: CHAT_SESSION_STATUS.CONNECTED,
+      readReceipt: receipt,
+      opponentLastReadMessageId: 0,
+    });
+
+    const opponentRead = chatSessionReducer(read, {
+      type: CHAT_SESSION_ACTION.READ_RECEIVED,
+      receipt: { roomId: 20, readerId: 2, lastReadMessageId: 20 },
+      isOpponent: true,
+    });
+    const olderOpponentRead = chatSessionReducer(opponentRead, {
+      type: CHAT_SESSION_ACTION.READ_RECEIVED,
+      receipt: { roomId: 20, readerId: 2, lastReadMessageId: 10 },
+      isOpponent: true,
+    });
+    expect(olderOpponentRead.opponentLastReadMessageId).toBe(20);
 
     const error = { code: 'MESSAGE_NOT_FOUND', roomId: 20 };
-    expect(chatSessionReducer(read, {
+    expect(chatSessionReducer(olderOpponentRead, {
       type: CHAT_SESSION_ACTION.READ_FAILED,
       error,
     })).toMatchObject({ status: CHAT_SESSION_STATUS.CONNECTED, readError: error });

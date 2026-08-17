@@ -16,6 +16,21 @@ vi.mock('../useChatReadReceipt.js', () => ({
 
 import { ChatModal } from './ChatModal.jsx';
 
+const mocks = vi.hoisted(() => ({
+  refreshUnread: vi.fn(() => Promise.resolve(0)),
+  useChatReadReceipt: vi.fn(),
+}));
+
+vi.mock('../ChatUnreadContext.jsx', () => ({
+  useChatUnread: () => ({
+    refreshUnread: mocks.refreshUnread,
+  }),
+}));
+
+vi.mock('../useChatReadReceipt.js', () => ({
+  useChatReadReceipt: mocks.useChatReadReceipt,
+}));
+
 function createChat(overrides = {}) {
   return {
     isOpen: true,
@@ -30,6 +45,10 @@ function createChat(overrides = {}) {
     closeChat: vi.fn(),
     requestRead: vi.fn(() => true),
     sendMessage: vi.fn(() => true),
+    room: { chatRoomId: 20 },
+    readError: null,
+    readReceipt: null,
+    requestRead: vi.fn(() => true),
     ...overrides,
   };
 }
@@ -104,5 +123,22 @@ describe('ChatModal', () => {
     expect(screen.getByText('상대 메시지').closest('li')).toHaveClass('chat-message--theirs');
     expect(screen.getByText('내 메시지').closest('li')).toHaveClass('chat-message--mine');
     expect(screen.getByText('삭제된 메시지입니다.')).toBeInTheDocument();
+  });
+
+  it('모달에 표시된 상대 메시지를 읽음 처리한다', () => {
+    const chat = createChat();
+
+    render(<ChatModal chat={chat} />);
+
+    expect(mocks.useChatReadReceipt).toHaveBeenCalledWith({
+      currentUserId: 1,
+      messages: chat.messages,
+      readError: null,
+      readReceipt: null,
+      refreshUnread: mocks.refreshUnread,
+      requestRead: chat.requestRead,
+      roomId: 20,
+      status: 'connected',
+    });
   });
 });

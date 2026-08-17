@@ -42,11 +42,17 @@ export function createChatSocket({ accessToken, onDisconnect, onProtocolError })
       settled = true;
       resolve();
     };
+
     client.onStompError = (frame) => {
       const error = new Error(frame.headers.message || 'STOMP 연결에 실패했습니다.');
-      if (!settled) reject(error);
-      else onDisconnect?.(error);
+
+      if (!settled) {
+        reject(error);
+        return;
+      }
+      onDisconnect?.(error);
     };
+
     client.onWebSocketError = () => {
       if (!settled) reject(new Error('WebSocket 연결에 실패했습니다.'));
     };

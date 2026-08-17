@@ -1,6 +1,6 @@
 import { Avatar } from '../../../shared/components/Avatar.jsx';
 
-export function MessageBubble({ message, isMine, target }) {
+export function MessageBubble({ message, isMine, isRead, target }) {
   const unsupported = message.chatType !== 'TEXT';
   const text = message.deletedAt
     ? '삭제된 메시지입니다.'
@@ -15,6 +15,7 @@ export function MessageBubble({ message, isMine, target }) {
         <p className={message.deletedAt || unsupported ? 'chat-message__bubble is-muted' : 'chat-message__bubble'}>{text}</p>
         {message.status === 'sending' && <span className="chat-message__status">전송 중…</span>}
         {message.status === 'failed' && <span className="chat-message__status chat-message__status--error">전송 실패</span>}
+        {isRead && <span className="chat-message__status">읽음</span>}
       </div>
     </li>
   );

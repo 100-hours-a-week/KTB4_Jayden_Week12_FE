@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef } from 'react';
-import { useChatUnread } from '../ChatUnreadContext.jsx';
-import { useChatReadReceipt } from '../useChatReadReceipt.js';
+import { useChatUnread } from "../ChatUnreadContext.jsx";
+import { useChatReadReceipt } from "../useChatReadReceipt.js";
 import { ChatConversation } from './ChatConversation.jsx';
 import { ChatModalHeader } from './ChatModalHeader.jsx';
 
@@ -11,27 +11,17 @@ export function ChatModal({ chat }) {
   const composerRef = useRef(null);
   const titleId = useId();
   const { refreshUnread } = useChatUnread();
-  const {
-    closeChat,
-    currentUser,
-    isOpen,
-    messages,
-    readError,
-    readReceipt,
-    requestRead,
-    room,
-    status,
-  } = chat;
+  const { closeChat, isOpen, status } = chat;
 
   useChatReadReceipt({
-    currentUserId: currentUser?.userId,
-    messages,
-    readError,
-    readReceipt,
+    currentUserId: chat.currentUser?.userId,
+    messages: chat.messages,
+    readError: chat.readError,
+    readReceipt: chat.readReceipt,
     refreshUnread,
-    requestRead,
-    roomId: room?.chatRoomId ?? null,
-    status,
+    requestRead: chat.requestRead,
+    roomId: chat.room?.chatRoomId ?? null,
+    status: chat.status,
   });
 
   useEffect(() => {
@@ -95,6 +85,7 @@ export function ChatModal({ chat }) {
           participant={chat.target}
           status={chat.status}
           onSend={chat.sendMessage}
+          opponentLastReadMessageId={chat.opponentLastReadMessageId}
         />
       </section>
     </div>

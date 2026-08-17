@@ -11,6 +11,9 @@ vi.mock('./ChatUnreadContext.jsx', () => ({
   useChatUnread: () => ({ refreshUnread: mocks.refreshUnread }),
 }));
 vi.mock('./useChatSession.js', () => ({ useChatSession: mocks.useChatSession }));
+vi.mock('./ChatUnreadContext.jsx', () => ({
+  useChatUnread: () => ({refreshUnread: vi.fn(() => Promise.resolve(0)),}),
+}));
 
 import { ChatSessionProvider, useChatSessionContext } from './ChatSessionContext.jsx';
 
